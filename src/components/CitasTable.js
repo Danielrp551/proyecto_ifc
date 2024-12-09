@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Select, MenuItem as SelectItem ,TextField, IconButton, Menu, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
-export default function CitasTable({ data,asesor }) {
+export default function CitasTable({ data,asesor, setRefresh }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null); // Para saber sobre qué fila se hizo click
   const [openDialog, setOpenDialog] = useState(false);
@@ -65,6 +65,7 @@ export default function CitasTable({ data,asesor }) {
 
       if (response.ok) {
         console.log("Datos guardados correctamente");
+        setRefresh()
         handleDialogClose();
       } else {
         console.error("Error al guardar los cambios");

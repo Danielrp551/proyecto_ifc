@@ -5,7 +5,7 @@ import { useState } from 'react';
 import {   TextField,Select, MenuItem as SelectItem, IconButton, Menu, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
-export default function PagosTable({ data,asesor }) {
+export default function PagosTable({ data,asesor, setRefresh }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null); 
   const [openDialog, setOpenDialog] = useState(false);
@@ -65,6 +65,7 @@ export default function PagosTable({ data,asesor }) {
 
       if (response.ok) {
         console.log("Datos guardados correctamente");
+        setRefresh()
         handleDialogClose();
       } else {
         console.error("Error al guardar los cambios");

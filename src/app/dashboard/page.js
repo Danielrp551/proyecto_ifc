@@ -13,6 +13,7 @@ export default function DashboardPage() {
   const [citas, setCitas] = useState([]);
   const [pagos, setPagos] = useState([]);
   const [selectedClientes, setSelectedClientes] = useState([]);
+  const [refresh, setRefresh] = useState(false); // Actualiza la tabla de clientes
 
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
@@ -41,7 +42,7 @@ export default function DashboardPage() {
       }
     }
     fetchClientes();
-  }, [currentPage, pageSize]);
+  }, [currentPage, pageSize, refresh]);
 
   useEffect(() => {
     async function fetchCitasYPagos() {
@@ -68,7 +69,7 @@ export default function DashboardPage() {
     }
   
     fetchCitasYPagos();
-  }, [selectedClientes, pageSize, currentPage]);
+  }, [selectedClientes, pageSize, currentPage, refresh]);
 
   if (status === "loading") {
     return <div>Loading...</div>;
@@ -101,17 +102,18 @@ export default function DashboardPage() {
           }}
           setSelectedClientes={setSelectedClientes}
           asesor={session.user.asesor}        
+          setRefresh={() => setRefresh((prev) => !prev)}
         />
       </section>
 
       <section style={{ marginTop: "2rem", display: "flex", gap: "2rem" }}>
         <div style={{ flex: 1 }}>
           <h2 style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>Citas</h2>
-          <CitasTable data={citas} asesor={session.user.asesor}  />
+          <CitasTable data={citas} asesor={session.user.asesor} setRefresh={() => setRefresh((prev) => !prev)} />
         </div>
         <div style={{ flex: 1 }}>
           <h2 style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>Pagos</h2>
-          <PagosTable data={pagos} asesor={session.user.asesor}  />
+          <PagosTable data={pagos} asesor={session.user.asesor} setRefresh={() => setRefresh((prev) => !prev)}/>
         </div>
       </section>
     </main>

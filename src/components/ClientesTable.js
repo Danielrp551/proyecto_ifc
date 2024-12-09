@@ -25,6 +25,7 @@ export default function ClientesTable({
     onPageSizeChange,
     setSelectedClientes,
     asesor,
+    setRefresh
 }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -84,6 +85,7 @@ export default function ClientesTable({
       const data = await response.json();
       console.log("Cambios guardados:", data);
 
+      setRefresh()
       // Cerrar el diálogo después de guardar
       handleDialogClose();
     } catch (error) {
