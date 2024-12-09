@@ -120,7 +120,7 @@ export default function CitasTable({ data,asesor, setRefresh }) {
         onClose={handleMenuClose}
       >
         <MenuItem onClick={() => handleAction('comercial')}>Acción Comercial</MenuItem>
-        <MenuItem onClick={() => handleAction('detalles')}>Ver Detalles</MenuItem>
+        {/*<MenuItem onClick={() => handleAction('detalles')}>Ver Detalles</MenuItem>*/}
       </Menu>
 
 

@@ -125,7 +125,7 @@ export default function PagosTable({ data,asesor, setRefresh }) {
         onClose={handleMenuClose}
       >
         <MenuItem onClick={() => handleAction('comercial')}>Acción Comercial</MenuItem>
-        <MenuItem onClick={() => handleAction('detalles')}>Ver Detalles</MenuItem>
+        {/*<MenuItem onClick={() => handleAction('detalles')}>Ver Detalles</MenuItem>*/}
       </Menu>
 
       <Dialog open={openDialog} onClose={handleDialogClose} fullWidth maxWidth="sm">
