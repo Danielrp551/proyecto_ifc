@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model acciones_comerciales {
+  acciones_comerciales_id Int       @id @default(autoincrement())
+  cliente_id              Int?
+  cita_id                 Int?
+  pago_id                 Int?
+  asesor_id               Int?
+  notas                   String    @db.Text
+  clientes                clientes? @relation(fields: [cliente_id], references: [cliente_id], onDelete: Cascade, onUpdate: NoAction, map: "acciones_comerciales_ibfk_1")
+  citas                   citas?    @relation(fields: [cita_id], references: [cita_id], onUpdate: NoAction, map: "acciones_comerciales_ibfk_2")
+  pagos                   pagos?    @relation(fields: [pago_id], references: [pago_id], onUpdate: NoAction, map: "acciones_comerciales_ibfk_3")
+  asesor                  asesor?   @relation(fields: [asesor_id], references: [asesor_id], onUpdate: NoAction, map: "acciones_comerciales_ibfk_4")
+
+  @@index([asesor_id], map: "asesor_id")
+  @@index([cita_id], map: "cita_id")
+  @@index([cliente_id], map: "cliente_id")
+  @@index([pago_id], map: "pago_id")
+}
+
+model asesor {
+  asesor_id            Int                    @id @default(autoincrement())
+  nombre               String                 @db.VarChar(120)
+  primer_apellido      String                 @db.VarChar(120)
+  segundo_apellido     String?                @db.VarChar(120)
+  celular              String?                @db.VarChar(12)
+  usuario_id           Int
+  acciones_comerciales acciones_comerciales[]
+  usuario              usuario                @relation(fields: [usuario_id], references: [usuario_id], onDelete: Cascade, onUpdate: NoAction, map: "asesor_ibfk_1")
+
+  @@index([usuario_id], map: "usuario_id")
+}
+
+model citas {
+  cita_id              Int                    @id @default(autoincrement())
+  cliente_id           Int
+  conversacion_id      Int?
+  fecha_cita           DateTime               @db.DateTime(0)
+  estado_cita          String?                @default("agendada") @db.VarChar(25)
+  motivo               String                 @db.VarChar(100)
+  acciones_comerciales acciones_comerciales[]
+  clientes             clientes               @relation(fields: [cliente_id], references: [cliente_id], onDelete: Cascade, onUpdate: NoAction, map: "citas_ibfk_1")
+  conversaciones       conversaciones?        @relation(fields: [conversacion_id], references: [conversacion_id], onUpdate: NoAction, map: "citas_ibfk_2")
+  pagos                pagos[]
+
+  @@index([cliente_id], map: "cliente_id")
+  @@index([conversacion_id], map: "conversacion_id")
+}
+
+model clientes {
+  cliente_id                   Int                    @id @default(autoincrement())
+  documento_identidad          String?                @db.VarChar(12)
+  tipo_documento               String?                @db.VarChar(20)
+  nombre                       String                 @db.VarChar(100)
+  apellido                     String?                @db.VarChar(100)
+  celular                      String                 @db.VarChar(20)
+  email                        String?                @unique(map: "email") @db.VarChar(100)
+  fecha_creacion               DateTime?              @default(now()) @db.DateTime(0)
+  fecha_ultima_interaccion     DateTime?              @db.DateTime(0)
+  fecha_ultima_interaccion_bot DateTime?              @db.DateTime(0)
+  estado                       String?                @default("activo") @db.VarChar(25)
+  categoria_no_interes         String?                @db.VarChar(20)
+  detalle_no_interes           String?                @db.VarChar(100)
+  acciones_comerciales         acciones_comerciales[]
+  citas                        citas[]
+  conversaciones               conversaciones[]
+  historico                    historico[]
+  leads                        leads[]
+  pagos                        pagos[]
+}
+
+model conversaciones {
+  conversacion_id          Int       @id @default(autoincrement())
+  cliente_id               Int
+  fecha_conversacion       DateTime? @default(now()) @db.DateTime(0)
+  tipo_conversacion        String?   @db.VarChar(50)
+  mensaje                  String?   @db.Text
+  resultado                String?   @db.VarChar(50)
+  estado_conversacion      String?   @default("activa") @db.VarChar(25)
+  fecha_ultima_interaccion DateTime? @default(now()) @db.DateTime(0)
+  citas                    citas[]
+  clientes                 clientes  @relation(fields: [cliente_id], references: [cliente_id], onDelete: Cascade, onUpdate: NoAction, map: "conversaciones_ibfk_1")
+
+  @@index([cliente_id], map: "cliente_id")
+}
+
+model historico {
+  historico_id Int       @id @default(autoincrement())
+  cliente_id   Int
+  estado       String    @db.VarChar(25)
+  fecha_estado DateTime? @default(now()) @db.DateTime(0)
+  clientes     clientes  @relation(fields: [cliente_id], references: [cliente_id], onDelete: Cascade, onUpdate: NoAction, map: "historico_ibfk_1")
+
+  @@index([cliente_id], map: "cliente_id")
+}
+
+model leads {
+  lead_id        Int      @id @default(autoincrement())
+  cliente_id     Int
+  fecha_contacto DateTime @db.DateTime(0)
+  prioridad_lead Int
+  lead_source    String   @db.VarChar(100)
+  campa_a        String?  @map("campaña") @db.VarChar(100)
+  tipo           String?  @db.VarChar(100)
+  canal_lead     String?  @db.VarChar(20)
+  estado_lead    String?  @default("nuevo") @db.VarChar(25)
+  notas          String?  @db.Text
+  clientes       clientes @relation(fields: [cliente_id], references: [cliente_id], onDelete: Cascade, onUpdate: NoAction, map: "leads_ibfk_1")
+
+  @@index([cliente_id], map: "cliente_id")
+}
+
+model pagos {
+  pago_id              Int                    @id @default(autoincrement())
+  cliente_id           Int
+  cita_id              Int?
+  fecha_pago           DateTime               @db.DateTime(0)
+  monto                Decimal                @db.Decimal(10, 2)
+  metodo_pago          String                 @db.VarChar(50)
+  estado_pago          String?                @default("pendiente") @db.VarChar(25)
+  acciones_comerciales acciones_comerciales[]
+  clientes             clientes               @relation(fields: [cliente_id], references: [cliente_id], onDelete: Cascade, onUpdate: NoAction, map: "pagos_ibfk_1")
+  citas                citas?                 @relation(fields: [cita_id], references: [cita_id], onUpdate: NoAction, map: "pagos_ibfk_2")
+
+  @@index([cita_id], map: "cita_id")
+  @@index([cliente_id], map: "cliente_id")
+}
+
+model usuario {
+  usuario_id Int      @id @default(autoincrement())
+  username   String   @unique(map: "username") @db.VarChar(50)
+  password   String   @db.VarChar(255)
+  asesor     asesor[]
+}
