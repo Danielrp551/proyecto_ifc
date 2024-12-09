@@ -5,6 +5,7 @@ import ClientesTable from "@/components/ClientesTable";
 import CitasTable from "@/components/CitasTable";
 import PagosTable from "@/components/PagosTable";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
   const [clientes, setClientes] = useState([]);
@@ -17,10 +18,10 @@ export default function DashboardPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
 
-  const { data: session} = useSession();
+  const { data: session, status} = useSession();
   //console.log("Session: ",session);
   if(session){
-    const asesor = session.user.asesor;
+    const asesor = session.user?.asesor;
     console.log("Asesor: ",asesor);
   }
 
@@ -68,6 +69,19 @@ export default function DashboardPage() {
   
     fetchCitasYPagos();
   }, [selectedClientes, pageSize, currentPage]);
+
+  if (status === "loading") {
+    return <div>Loading...</div>;
+  }
+
+  if (!session) {
+    useRouter().push("/login"); // Redirige al usuario a la página de login
+    return null; // Evita renderizar contenido adicional
+  }
+
+  if (!session.user?.asesor) {
+    return <div>Error: No se encontró la información del asesor.</div>;
+  }
 
   return (
     <main style={{ padding: "1rem", maxWidth: "100%" }}>
