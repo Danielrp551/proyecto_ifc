@@ -56,7 +56,7 @@ export default function Layout({ children }) {
     >
       <Toolbar>
         <Avatar
-          src="/path-to-avatar.png"
+          src="https://trasplantecapilar.pe/wp-content/uploads/2024/09/logo-ifc.jpg"
           alt="Usuario"
           sx={{ width: 60, height: 60, mx: "auto" }}
         />
@@ -77,6 +77,7 @@ export default function Layout({ children }) {
           </ListItemIcon>
           <ListItemText primary="Dashboard" />
         </ListItem>
+        {/*
         <ListItem
           button="true"
           onClick={() => router.push("/settings")}
@@ -91,6 +92,7 @@ export default function Layout({ children }) {
           </ListItemIcon>
           <ListItemText primary="Configuración" />
         </ListItem>
+          */}
       </List>
       <Divider sx={{ bgcolor: "#2D3748" }} />
       <List>
@@ -142,7 +144,7 @@ export default function Layout({ children }) {
           <IconButton color="inherit" sx={{ mr: 2 }}>
             <NotificationsIcon />
           </IconButton>
-          <Avatar alt="Usuario" src="/path-to-avatar.png" />
+          <Avatar alt="Usuario" src="https://trasplantecapilar.pe/wp-content/uploads/2024/09/logo-ifc.jpg" />
         </Toolbar>
       </AppBar>
       <Box

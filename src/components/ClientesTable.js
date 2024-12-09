@@ -1,8 +1,9 @@
 "use client";
 
 import { DataGrid } from "@mui/x-data-grid";
-import { useState } from "react";
+import { use, useState } from "react";
 import {
+  TextField,
   IconButton,
   Menu,
   MenuItem,
@@ -13,6 +14,7 @@ import {
   Button,
 } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import { useSession } from "next-auth/react";
 
 export default function ClientesTable({ 
     data,
@@ -22,15 +24,21 @@ export default function ClientesTable({
     onPageChange,
     onPageSizeChange,
     setSelectedClientes,
+    asesor,
 }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [dialogTitle, setDialogTitle] = useState("");
   const [selectionModel, setSelectionModel] = useState([]); // Mantiene los IDs seleccionados
+  const [editedData, setEditedData] = useState(null); // Datos editados del cliente
+  const [notes, setNotes] = useState(""); // Notas del cambio
+  const [error, setError] = useState(false); // Validación de notas
+
 
   const handleMenuOpen = (params, event) => {
     setSelectedRow(params.row);
+    setEditedData({ ...params.row });
     setAnchorEl(event.currentTarget);
   };
 
@@ -50,6 +58,55 @@ export default function ClientesTable({
 
   const handleDialogClose = () => {
     setOpenDialog(false);
+    setNotes("");
+    setError(false);
+  };
+
+  const saveChanges = async () => {
+    try {
+      const response = await fetch(`/api/clients/${editedData.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nombreCompleto: editedData.nombreCompleto,
+          email: editedData.email,
+          notas : notes,
+          asesorId : asesor.asesor_id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al guardar los cambios.");
+      }
+
+      const data = await response.json();
+      console.log("Cambios guardados:", data);
+
+      // Cerrar el diálogo después de guardar
+      handleDialogClose();
+    } catch (error) {
+      console.error("Error al guardar cambios:", error.message);
+    }
+  };
+
+  const handleSave = () => {
+    if (!notes.trim()) {
+      setError(true);
+      return;
+    }
+    // Aquí se implementaría la lógica para guardar los cambios (API o lógica adicional)
+    console.log("Datos guardados:", editedData);
+    console.log("Notas:", notes);
+    saveChanges();
+  };
+
+  const handleInputChange = (field, value) => {
+    setEditedData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
   const columns = [
@@ -114,28 +171,50 @@ export default function ClientesTable({
         <MenuItem onClick={() => handleAction("detalles")}>Ver Detalles</MenuItem>
       </Menu>
 
-      <Dialog open={openDialog} onClose={handleDialogClose}>
+      <Dialog open={openDialog} onClose={handleDialogClose} fullWidth maxWidth="sm">
         <DialogTitle>{dialogTitle}</DialogTitle>
         <DialogContent>
-          {selectedRow && (
-            <div>
-              <p>
-                <strong>ID:</strong> {selectedRow.id}
-              </p>
-              <p>
-                <strong>Nombre:</strong> {selectedRow.nombreCompleto}
-              </p>
-              <p>
-                <strong>Email:</strong> {selectedRow.email}
-              </p>
-              <p>
-                <strong>Teléfono:</strong> {selectedRow.celular}
-              </p>
-            </div>
+          <p><strong>Usuario actual:</strong> {asesor.nombre + " " + asesor.primer_apellido}</p>
+          {editedData && (
+            <>
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Nombre"
+                value={editedData.nombreCompleto}
+                onChange={(e) => handleInputChange("nombreCompleto", e.target.value)}
+              />
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Email"
+                value={editedData.email}
+                onChange={(e) => handleInputChange("email", e.target.value)}
+              />
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Teléfono"
+                value={editedData.celular}
+                InputProps={{ readOnly: true }} // No se puede editar el teléfono
+              />
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Notas (obligatorio)"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                error={error}
+                helperText={error ? "Las notas son obligatorias" : ""}
+                multiline
+                rows={4}
+              />
+            </>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDialogClose}>Cerrar</Button>
+          <Button onClick={handleSave} variant="contained" color="primary">Guardar</Button>
         </DialogActions>
       </Dialog>
     </div>

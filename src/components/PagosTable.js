@@ -2,17 +2,22 @@
 
 import { DataGrid } from '@mui/x-data-grid';
 import { useState } from 'react';
-import { IconButton, Menu, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+import {   TextField,Select, MenuItem as SelectItem, IconButton, Menu, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
-export default function PagosTable({ data }) {
+export default function PagosTable({ data,asesor }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null); 
   const [openDialog, setOpenDialog] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
+  const [editedData, setEditedData] = useState(null);
+  const [notes, setNotes] = useState("");
+  const [error, setError] = useState(false);
+
 
   const handleMenuOpen = (params, event) => {
     setSelectedRow(params.row);
+    setEditedData({ ...params.row });
     setAnchorEl(event.currentTarget);
   };
 
@@ -32,11 +37,53 @@ export default function PagosTable({ data }) {
 
   const handleDialogClose = () => {
     setOpenDialog(false);
+    setNotes("");
+    setError(false);
+  };
+
+  const handleSave = async () => {
+    if (!notes.trim()) {
+      setError(true);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/pagos/${editedData.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fecha_pago: editedData.fecha_pago,
+          monto: editedData.montoReal,
+          metodo_pago: editedData.metodo_pago,
+          estado_pago: editedData.estado_pago,
+          notas: notes,
+          asesorId: asesor.asesor_id
+        }),
+      });
+
+      if (response.ok) {
+        console.log("Datos guardados correctamente");
+        handleDialogClose();
+      } else {
+        console.error("Error al guardar los cambios");
+      }
+    } catch (error) {
+      console.error("Error en la solicitud:", error);
+    }
+  };
+
+  const handleInputChange = (field, value) => {
+    setEditedData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
   const columns = [
     { field: 'fecha_pago', headerName: 'Fecha', flex: 1, minWidth: 120 },
-    { field: 'monto', headerName: 'Monto', flex: 1, minWidth: 80 },
+    { field: 'monto', headerName: 'Monto', flex: 1, minWidth: 80,valueFormatter: (params) => params.value, },
     { field: 'metodo_pago', headerName: 'Método', flex: 1, minWidth: 120 },
     { field: 'estado_pago', headerName: 'Estado', flex: 1, minWidth: 100 },
     {
@@ -55,8 +102,9 @@ export default function PagosTable({ data }) {
   const rows = data.map((pago) => ({
     id: pago.pago_id,
     fecha_pago: pago.fecha_pago.toString().slice(0,10),
-    monto: `$${pago.monto}`,
-    metodo_pago: pago.metodo_pago,
+    monto: `S/. ${pago.monto}`,
+    montoReal: pago.monto,
+    metodo_pago: pago.metodo_pago,  
     estado_pago: pago.estado_pago,
   }));
 
@@ -79,21 +127,65 @@ export default function PagosTable({ data }) {
         <MenuItem onClick={() => handleAction('detalles')}>Ver Detalles</MenuItem>
       </Menu>
 
-      <Dialog open={openDialog} onClose={handleDialogClose}>
+      <Dialog open={openDialog} onClose={handleDialogClose} fullWidth maxWidth="sm">
         <DialogTitle>{dialogTitle}</DialogTitle>
         <DialogContent>
-          {selectedRow && (
-            <div>
-              <p><strong>ID:</strong> {selectedRow.id}</p>
-              <p><strong>Fecha:</strong> {selectedRow.fecha_pago}</p>
-              <p><strong>Monto:</strong> {selectedRow.monto}</p>
-              <p><strong>Método:</strong> {selectedRow.metodo_pago}</p>
-              <p><strong>Estado:</strong> {selectedRow.estado_pago}</p>
-            </div>
+          <p>
+            <strong>Usuario actual:</strong> {asesor.nombre + " " + asesor.primer_apellido}
+          </p>
+          {editedData && (
+            <>
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Fecha"
+                type="date"
+                value={editedData.fecha_pago}
+                onChange={(e) => handleInputChange("fecha_pago", e.target.value)}
+              />
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Monto (S/.)"
+                type="number"
+                value={editedData.montoReal}
+                onChange={(e) => handleInputChange("montoReal", e.target.value)}
+              />
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Método de Pago"
+                value={editedData.metodo_pago}
+                onChange={(e) => handleInputChange("metodo_pago", e.target.value)}
+              />
+              <Select
+                fullWidth
+                margin="normal"
+                value={editedData.estado_pago}
+                onChange={(e) => handleInputChange("estado_pago", e.target.value)}
+              >
+                <SelectItem value="pendiente">Pendiente</SelectItem>
+                <SelectItem value="completado">Completado</SelectItem>
+              </Select>
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Notas (obligatorio)"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                error={error}
+                helperText={error ? "Las notas son obligatorias" : ""}
+                multiline
+                rows={4}
+              />
+            </>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDialogClose}>Cerrar</Button>
+          <Button onClick={handleSave} variant="contained" color="primary">
+            Guardar
+          </Button>
         </DialogActions>
       </Dialog>
     </div>

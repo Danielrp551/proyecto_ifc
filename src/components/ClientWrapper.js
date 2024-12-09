@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Layout from "@/components/Layout";
+import { SessionProvider } from "next-auth/react";
 
 export default function ClientWrapper({ children }) {
   const pathname = usePathname();
@@ -10,5 +11,5 @@ export default function ClientWrapper({ children }) {
   // Verifica si la ruta actual está en las rutas excluidas
   const isExcluded = excludedRoutes.includes(pathname);
 
-  return isExcluded ? children : <Layout>{children}</Layout>;
+  return isExcluded ? children : <SessionProvider><Layout>{children}</Layout></SessionProvider>;
 }

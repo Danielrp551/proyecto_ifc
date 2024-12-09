@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import ClientesTable from "@/components/ClientesTable";
 import CitasTable from "@/components/CitasTable";
 import PagosTable from "@/components/PagosTable";
+import { useSession } from "next-auth/react";
 
 export default function DashboardPage() {
   const [clientes, setClientes] = useState([]);
@@ -15,6 +16,13 @@ export default function DashboardPage() {
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
+
+  const { data: session} = useSession();
+  //console.log("Session: ",session);
+  if(session){
+    const asesor = session.user.asesor;
+    console.log("Asesor: ",asesor);
+  }
 
   useEffect(() => {
     // Fetch inicial: clientes, citas y pagos completos
@@ -77,18 +85,19 @@ export default function DashboardPage() {
             setPageSize(newPageSize);
             //setCurrentPage(1); // Reinicia a la página 1 si cambia el tamaño
           }}
-          setSelectedClientes={setSelectedClientes}        
+          setSelectedClientes={setSelectedClientes}
+          asesor={session.user.asesor}        
         />
       </section>
 
       <section style={{ marginTop: "2rem", display: "flex", gap: "2rem" }}>
         <div style={{ flex: 1 }}>
           <h2 style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>Citas</h2>
-          <CitasTable data={citas} />
+          <CitasTable data={citas} asesor={session.user.asesor}  />
         </div>
         <div style={{ flex: 1 }}>
           <h2 style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>Pagos</h2>
-          <PagosTable data={pagos} />
+          <PagosTable data={pagos} asesor={session.user.asesor}  />
         </div>
       </section>
     </main>

@@ -40,14 +40,27 @@ export const authOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
+        // Consulta para obtener toda la información del asesor
+        const asesor = await prisma.asesor.findFirst({
+          where: { usuario_id: user.id },
+          select: {
+            asesor_id: true,
+            nombre: true,
+            primer_apellido: true,
+            segundo_apellido: true,
+            celular: true,
+            usuario_id: true,
+          },
+        });
+        if (asesor) {
+          token.asesor = asesor; // Guarda toda la información en el token
+        }
       }
       return token;
     },
     async session({ session, token }) {
-      if (token) {
-        session.user.id = token.id;
-        // Podrías agregar más info del usuario si quieres
+      if (token.asesor) {
+        session.user.asesor = token.asesor; // Guarda toda la información en la sesión
       }
       return session;
     }
