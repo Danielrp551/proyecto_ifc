@@ -45,6 +45,7 @@ model citas {
   fecha_cita           DateTime               @db.DateTime(0)
   estado_cita          String?                @default("agendada") @db.VarChar(25)
   motivo               String                 @db.VarChar(100)
+  fecha_creacion       DateTime               @default(now()) @db.DateTime(0)
   acciones_comerciales acciones_comerciales[]
   clientes             clientes               @relation(fields: [cliente_id], references: [cliente_id], onDelete: Cascade, onUpdate: NoAction, map: "citas_ibfk_1")
   conversaciones       conversaciones?        @relation(fields: [conversacion_id], references: [conversacion_id], onUpdate: NoAction, map: "citas_ibfk_2")
@@ -68,8 +69,10 @@ model clientes {
   estado                       String?                @default("activo") @db.VarChar(25)
   categoria_no_interes         String?                @db.VarChar(20)
   detalle_no_interes           String?                @db.VarChar(100)
+  bound                        Boolean?
   acciones_comerciales         acciones_comerciales[]
   citas                        citas[]
+  cliente_campa_a              cliente_campa_a[]
   conversaciones               conversaciones[]
   historico                    historico[]
   leads                        leads[]
@@ -138,4 +141,31 @@ model usuario {
   username   String   @unique(map: "username") @db.VarChar(50)
   password   String   @db.VarChar(255)
   asesor     asesor[]
+}
+
+model campa_as {
+  campa_a_id      Int               @id @default(autoincrement()) @map("campaña_id")
+  nombre_campa_a  String            @map("nombre_campaña") @db.VarChar(100)
+  descripcion     String?           @db.Text
+  fecha_creacion  DateTime?         @default(now()) @db.DateTime(0)
+  estado_campa_a  String?           @default("activa") @map("estado_campaña") @db.VarChar(25)
+  mensaje_cliente String            @db.Text
+  fecha_inicio    DateTime?         @db.DateTime(0)
+  fecha_fin       DateTime?         @db.DateTime(0)
+  cliente_campa_a cliente_campa_a[]
+
+  @@map("campañas")
+}
+
+model cliente_campa_a {
+  cliente_campa_a_id Int       @id @default(autoincrement()) @map("cliente_campaña_id")
+  cliente_id         Int
+  campa_a_id         Int       @map("campaña_id")
+  fecha_asociacion   DateTime? @default(now()) @db.DateTime(0)
+  clientes           clientes  @relation(fields: [cliente_id], references: [cliente_id], onDelete: Cascade, onUpdate: NoAction, map: "cliente_campaña_ibfk_1")
+  campa_as           campa_as  @relation(fields: [campa_a_id], references: [campa_a_id], onDelete: Cascade, onUpdate: NoAction, map: "cliente_campaña_ibfk_2")
+
+  @@index([campa_a_id], map: "campaña_id")
+  @@index([cliente_id], map: "cliente_id")
+  @@map("cliente_campaña")
 }

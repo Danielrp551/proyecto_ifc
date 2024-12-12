@@ -113,8 +113,9 @@ export default function ClientesTable({
 
   const columns = [
     { field: "nombreCompleto", headerName: "Nombre", flex: 1, minWidth: 150 },
-    { field: "email", headerName: "Email", flex: 1, minWidth: 150 },
     { field: "celular", headerName: "Teléfono", flex: 1, minWidth: 120 },
+    { field: "estado", headerName: "Estado", flex: 1, minWidth: 100 },
+    { field: "bound", headerName: "Bound", flex: 1, minWidth: 100 },
     {
       field: "actions",
       headerName: "Acciones",
@@ -127,12 +128,16 @@ export default function ClientesTable({
       ),
     },
   ];
-
+  console.log("DATA CLIENTES", data);
   const rows = data.map((cliente) => ({
     id: cliente.cliente_id,
     nombreCompleto: `${cliente.nombre} ${cliente.apellido || ""}`.trim(),
     email: cliente.email,
     celular: cliente.celular,
+    estado: cliente.estado,
+    bound: cliente.bound === true ? "INBOUND" : "OUTBOUND",
+    fecha_creacion: cliente.fecha_creacion,
+    fecha_ultima_interaccion: cliente.fecha_ultima_interaccion,
   }));
 
   const handleSelectionChange = (newSelection) => {

@@ -6,6 +6,12 @@ export async function GET(request) {
   const clienteIds = url.searchParams.get("cliente_ids");
   const page = parseInt(url.searchParams.get("page"), 10) || 1;
   const pageSize = parseInt(url.searchParams.get("pageSize"), 10) || 10;
+  const estado = url.searchParams.get("estado") || null;
+  const bound = url.searchParams.get("bound") || null;
+  const searchname = url.searchParams.get("search") || null;
+  
+  const estados = estado? estado.split(',') : ["promesas de pago", "seguimiento", "interesado", "activo", "cita agendada", "no interesado","pendiente de contacto"];
+  const bound_filter = bound === "inbound"? true : bound === "outbound"? false : null;
 
   if (clienteIds) {
     const ids = clienteIds.split(",").map((id) => parseInt(id, 10));
@@ -16,7 +22,7 @@ export async function GET(request) {
 
     const [citas, pagos] = await Promise.all([
         prisma.citas.findMany({
-          where: { cliente_id: { in: ids } },
+          where: { cliente_id: { in: ids }},
         }),
         prisma.pagos.findMany({
           where: { cliente_id: { in: ids } },
@@ -44,12 +50,9 @@ export async function GET(request) {
   // Paginación general para clientes
   const totalClientes = await prisma.clientes.count();
   const clientes = await prisma.clientes.findMany({
-    select: {
-      cliente_id: true,
-      nombre: true,
-      apellido: true,
-      celular: true,
-      email: true,
+    where: { estado: { in: estados }, 
+    ...(bound_filter !== null && { bound: bound_filter }),
+    ...(searchname && { OR: [{ nombre: { contains: searchname } }, { apellido: { contains: searchname } }] }),
     },
     skip: (page - 1) * pageSize,
     take: pageSize,
