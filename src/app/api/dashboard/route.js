@@ -10,7 +10,7 @@ export async function GET(request) {
   const bound = url.searchParams.get("bound") || null;
   const searchname = url.searchParams.get("search") || null;
   
-  const estados = estado? estado.split(',') : ["contactado","promesas de pago", "seguimiento", "interesado", "activo", "cita agendada", "no interesado","pendiente de contacto","nuevo"];
+  const estados = estado? estado.split(',') : ["promesas de pago", "seguimiento", "interesado", "activo", "cita agendada", "no interesado","pendiente de contacto","nuevo"];
   const bound_filter = bound === "inbound"? true : bound === "outbound"? false : null;
 
   if (clienteIds) {
@@ -47,13 +47,16 @@ export async function GET(request) {
     return NextResponse.json({ citas, pagos });
   }
 
-  // Paginación general para clientes
-  const totalClientes = await prisma.clientes.count();
-  const clientes = await prisma.clientes.findMany({
-    where: { estado: { in: estados }, 
+  const whereClause = {
+    estado: { in: estados },
     ...(bound_filter !== null && { bound: bound_filter }),
     ...(searchname && { OR: [{ nombre: { contains: searchname } }, { apellido: { contains: searchname } }] }),
-    },
+  };
+
+  // Paginación general para clientes
+  const totalClientes = await prisma.clientes.count({ where: whereClause });
+  const clientes = await prisma.clientes.findMany({
+    where: whereClause,
     skip: (page - 1) * pageSize,
     take: pageSize,
   });

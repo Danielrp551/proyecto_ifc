@@ -32,6 +32,11 @@ export default function DashboardPage() {
   }
 
   useEffect(() => {
+    // Restablecer la página a 1 cuando los filtros cambien
+    setCurrentPage(1);
+  }, [filtros]);
+
+  useEffect(() => {
     // Fetch inicial: clientes, citas y pagos completos
     async function fetchClientes() {
       try {
