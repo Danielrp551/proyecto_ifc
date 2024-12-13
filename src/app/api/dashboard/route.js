@@ -10,7 +10,7 @@ export async function GET(request) {
   const bound = url.searchParams.get("bound") || null;
   const searchname = url.searchParams.get("search") || null;
   
-  const estados = estado? estado.split(',') : ["promesas de pago", "seguimiento", "interesado", "activo", "cita agendada", "no interesado","pendiente de contacto","nuevo"];
+  const estados = estado? estado.split(',') : ["contactado","promesas de pago", "seguimiento", "interesado", "activo", "cita agendada", "no interesado","pendiente de contacto","nuevo"];
   const bound_filter = bound === "inbound"? true : bound === "outbound"? false : null;
 
   if (clienteIds) {
