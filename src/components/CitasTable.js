@@ -97,12 +97,24 @@ export default function CitasTable({ data,asesor, setRefresh }) {
     }
   ];
 
-  const rows = data.map((cita) => ({
-    id: cita.cita_id,
-    fecha_cita: cita.fecha_cita.toString().slice(0,10),
-    motivo: cita.motivo,
-    estado_cita: cita.estado_cita,
-  }));
+  console.log("DATA CITAS", data);
+  const rows = data.map((cita) => {
+    const fecha = cita.fecha_cita.replace("Z", ""); // Elimina la Z para evitar ajuste UTC
+    const fechaSinConversion = new Date(fecha);
+  
+    return {
+      id: cita.cita_id,
+      fecha_cita: fechaSinConversion.toLocaleString("es-ES", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      motivo: cita.motivo,
+      estado_cita: cita.estado_cita,
+    };
+  });
 
   return (
     <div style={{ height: 300, width: '100%', border: '1px solid #ddd', borderRadius: '4px' }}>

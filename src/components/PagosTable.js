@@ -100,9 +100,17 @@ export default function PagosTable({ data,asesor, setRefresh }) {
     }
   ];
 
+  console.log("DATA PAGOS", data);
   const rows = data.map((pago) => ({
     id: pago.pago_id,
-    fecha_pago: pago.fecha_pago.toString().slice(0,10),
+    fecha_pago: new Date(pago.fecha_pago).toLocaleString("es-ES", {
+      timeZone: "America/Lima", // Cambia según tu zona horaria
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
     monto: `S/. ${pago.monto}`,
     montoReal: pago.monto,
     metodo_pago: pago.metodo_pago,  
