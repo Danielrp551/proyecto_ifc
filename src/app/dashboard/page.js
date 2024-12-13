@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { FormControl, Box, InputLabel, Select, MenuItem as SelectItem, TextField, InputAdornment } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import { DateFilter } from "@/components/date-filter";
 
 export default function DashboardPage() {
   const [clientes, setClientes] = useState([]);
@@ -22,7 +23,7 @@ export default function DashboardPage() {
   const [pageSize, setPageSize] = useState(5);
 
   // filtros
-  const [filtros, setFiltros] = useState({ estado_cliente: "vacio", bound: "vacio",search: "" });
+  const [filtros, setFiltros] = useState({ estado_cliente: "vacio", bound: "vacio",search: "",dateRange: { from: null, to: null } });
 
   const { data: session, status } = useSession();
   //console.log("Session: ",session);
@@ -43,8 +44,13 @@ export default function DashboardPage() {
         console.log("Fetching clientes...");
         const bound = (filtros.bound !== "" && filtros.bound !=="vacio") ? `&bound=${filtros.bound}` : "";
         const search = (filtros.search !== "" && filtros.search !=="vacio") ? `&search=${filtros.search}` : "";
+        
+        const dateRange =
+        filtros.dateRange.from && filtros.dateRange.to
+          ? `&fromDate=${filtros.dateRange.from.toISOString()}&toDate=${filtros.dateRange.to.toISOString()}`
+          : "";
         const res = await fetch(
-          `/api/dashboard?page=${currentPage}&pageSize=${pageSize}${(filtros.estado_cliente !== "" && filtros.estado_cliente !=="vacio") ? `&estado=${filtros.estado_cliente}` : ""}${bound}${search}`
+          `/api/dashboard?page=${currentPage}&pageSize=${pageSize}${(filtros.estado_cliente !== "" && filtros.estado_cliente !=="vacio") ? `&estado=${filtros.estado_cliente}` : ""}${bound}${search}${dateRange}`
         );
         const data = await res.json();
         setClientes(data.clientes);
@@ -54,7 +60,7 @@ export default function DashboardPage() {
       }
     }
     fetchClientes();
-  }, [currentPage, pageSize, refresh, filtros.estado_cliente, filtros.bound]);
+  }, [currentPage, pageSize, refresh, filtros.estado_cliente, filtros.bound,filtros.dateRange]);
 
   useEffect(() => {
     async function fetchCitasYPagos() {
@@ -63,12 +69,16 @@ export default function DashboardPage() {
         const estado = (filtros.estado_cliente !== "" && filtros.estado_cliente !=="vacio") ? `&estado=${filtros.estado_cliente}` : "";
         const bound = (filtros.bound !== "" && filtros.bound !=="vacio") ? `&bound=${filtros.bound}` : "";
         const search = (filtros.search !== "" && filtros.search !=="vacio") ? `&search=${filtros.search}` : "";
+        const dateRange =
+        filtros.dateRange.from && filtros.dateRange.to
+          ? `&fromDate=${filtros.dateRange.from.toISOString()}&toDate=${filtros.dateRange.to.toISOString()}`
+          : "";
         const endpoint =
           selectedClientes.length > 0
             ? `/api/dashboard?cliente_ids=${selectedClientes.join(
               ","
             )}&page=${currentPage}&pageSize=${pageSize}${estado}`
-            : `/api/dashboard?page=${currentPage}&pageSize=${pageSize}${estado}${bound}${search}`;
+            : `/api/dashboard?page=${currentPage}&pageSize=${pageSize}${estado}${bound}${search}${dateRange}`;
 
         const res = await fetch(endpoint);
         const data = await res.json();
@@ -84,12 +94,20 @@ export default function DashboardPage() {
     }
 
     fetchCitasYPagos();
-  }, [selectedClientes, pageSize, currentPage, refresh, filtros.estado_cliente, filtros.bound]);
+  }, [selectedClientes, pageSize, currentPage, refresh, filtros.estado_cliente, filtros.bound,filtros.dateRange]);
 
   const handleInputChange = (field, value) => {
     setFiltros((prev) => ({
       ...prev,
       [field]: value,
+    }));
+  };
+
+  // New function to handle date range changes
+  const handleDateChange = (dateRange) => {
+    setFiltros((prev) => ({
+      ...prev,
+      dateRange: dateRange,
     }));
   };
 
@@ -167,7 +185,8 @@ export default function DashboardPage() {
             <SelectItem value="inbound">Inbound</SelectItem>
             <SelectItem value="outbound">Outbound</SelectItem>
           </Select>
-        </FormControl>        
+        </FormControl>
+        <DateFilter onDateChange={handleDateChange} />        
       </Box>
       <section style={{ marginTop: "2rem" }}>
         <h2 style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>Clientes</h2>

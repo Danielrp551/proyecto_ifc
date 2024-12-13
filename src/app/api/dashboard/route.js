@@ -9,6 +9,8 @@ export async function GET(request) {
   const estado = url.searchParams.get("estado") || null;
   const bound = url.searchParams.get("bound") || null;
   const searchname = url.searchParams.get("search") || null;
+  const fromDate = url.searchParams.get("fromDate") || null;
+  const toDate = url.searchParams.get("toDate") || null;
   
   const estados = estado? estado.split(',') : ["promesas de pago", "seguimiento", "interesado", "activo", "cita agendada", "no interesado","pendiente de contacto","nuevo"];
   const bound_filter = bound === "inbound"? true : bound === "outbound"? false : null;
@@ -51,6 +53,13 @@ export async function GET(request) {
     estado: { in: estados },
     ...(bound_filter !== null && { bound: bound_filter }),
     ...(searchname && { OR: [{ nombre: { contains: searchname } }, { apellido: { contains: searchname } }] }),
+    ...(fromDate &&
+      toDate && {
+        fecha_creacion: {
+          gte: new Date(fromDate),
+          lte: new Date(toDate),
+        },
+      }),
   };
 
   // Paginación general para clientes
