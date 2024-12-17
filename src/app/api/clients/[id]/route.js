@@ -12,6 +12,7 @@ export async function PUT(req, { params }) {
       data: {
         nombre: body.nombreCompleto.split(" ")[0],
         apellido: body.nombreCompleto.split(" ").slice(1).join(" "),
+        observaciones: body.observaciones,
         email: body.email,
       },
     });

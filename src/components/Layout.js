@@ -19,7 +19,7 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import LogoutIcon from "@mui/icons-material/Logout";
-import SettingsIcon from "@mui/icons-material/Settings";
+import CampaignIcon from '@mui/icons-material/Campaign';
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -93,6 +93,20 @@ export default function Layout({ children }) {
           <ListItemText primary="Configuración" />
         </ListItem>
           */}
+        <ListItem
+          button="true"
+          onClick={() => router.push("/campaigns")}
+          sx={{
+            "&:hover": { bgcolor: "#2D3748" },
+            px: 3,
+            py: 1.5,
+          }}
+        >
+          <ListItemIcon sx={{ color: "#fff" }}>
+            <CampaignIcon />
+          </ListItemIcon>
+          <ListItemText primary="Campañas" />
+        </ListItem>
       </List>
       <Divider sx={{ bgcolor: "#2D3748" }} />
       <List>

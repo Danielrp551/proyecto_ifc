@@ -70,6 +70,7 @@ model clientes {
   categoria_no_interes         String?                @db.VarChar(20)
   detalle_no_interes           String?                @db.VarChar(100)
   bound                        Boolean?
+  observaciones                String?                @db.Text
   acciones_comerciales         acciones_comerciales[]
   citas                        citas[]
   cliente_campa_a              cliente_campa_a[]
@@ -152,6 +153,7 @@ model campa_as {
   mensaje_cliente String            @db.Text
   fecha_inicio    DateTime?         @db.DateTime(0)
   fecha_fin       DateTime?         @db.DateTime(0)
+  num_clientes    Int?              @default(0)
   cliente_campa_a cliente_campa_a[]
 
   @@map("campañas")

@@ -12,6 +12,8 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useSession } from "next-auth/react";
@@ -36,6 +38,9 @@ export default function ClientesTable({
   const [notes, setNotes] = useState(""); // Notas del cambio
   const [error, setError] = useState(false); // Validación de notas
 
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
   const handleMenuOpen = (params, event) => {
     setSelectedRow(params.row);
@@ -73,6 +78,7 @@ export default function ClientesTable({
         body: JSON.stringify({
           nombreCompleto: editedData.nombreCompleto,
           email: editedData.email,
+          observaciones: editedData.observaciones,
           notas : notes,
           asesorId : asesor.asesor_id,
         }),
@@ -88,8 +94,14 @@ export default function ClientesTable({
       setRefresh()
       // Cerrar el diálogo después de guardar
       handleDialogClose();
+      setSnackbarMessage('Acción comercial guardada exitosamente');
+      setSnackbarSeverity('success');
+      setOpenSnackbar(true);
     } catch (error) {
       console.error("Error al guardar cambios:", error.message);
+      setSnackbarMessage('Error al crear la acción comercial');
+      setSnackbarSeverity('error');
+      setOpenSnackbar(true);
     }
   };
 
@@ -138,6 +150,7 @@ export default function ClientesTable({
     bound: cliente.bound === true ? "INBOUND" : "OUTBOUND",
     fecha_creacion: cliente.fecha_creacion,
     fecha_ultima_interaccion: cliente.fecha_ultima_interaccion,
+    observaciones: cliente.observaciones,
   }));
 
   const handleSelectionChange = (newSelection) => {
@@ -145,6 +158,13 @@ export default function ClientesTable({
     setSelectionModel(newSelection); // Actualiza los seleccionados internamente
     setSelectedClientes(newSelection); // Notifica al componente principal
   };
+
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === 'clickaway') {
+        return;
+    }
+    setOpenSnackbar(false);
+};
 
   return (
     <div style={{ height: 300, width: "100%", border: "1px solid #ddd", borderRadius: "4px" }}>
@@ -208,6 +228,13 @@ export default function ClientesTable({
               <TextField
                 fullWidth
                 margin="normal"
+                label="Observaciones"
+                value={editedData.observaciones}
+                onChange={(e) => handleInputChange("observaciones",e.target.value)}
+              />
+              <TextField
+                fullWidth
+                margin="normal"
                 label="Notas (obligatorio)"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -224,6 +251,13 @@ export default function ClientesTable({
           <Button onClick={handleSave} variant="contained" color="primary">Guardar</Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar open={openSnackbar} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+          <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%' }}>
+              {snackbarMessage}
+          </Alert>
+      </Snackbar>
+      
     </div>
   );
 }

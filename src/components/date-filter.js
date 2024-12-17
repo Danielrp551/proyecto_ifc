@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { format, subDays, subMonths, subWeeks, startOfDay, endOfDay } from "date-fns"
 import { es } from "date-fns/locale"
 import { TextField, MenuItem, IconButton, Menu } from "@mui/material"
@@ -9,6 +9,10 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider"
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns"
 
 const presets = [
+  {
+    label: "Todo",
+    getValue: () => ({ from: null, to: null })
+  },
   { 
     label: "Hoy", 
     getValue: () => ({ 
@@ -46,11 +50,20 @@ const presets = [
   },
 ]
 
-export function DateFilter({ onDateChange }) {
+export function DateFilter({ onDateChange, reset }) {
   const [startDate, setStartDate] = useState(new Date())
   const [endDate, setEndDate] = useState(new Date())
-  const [selectedPreset, setSelectedPreset] = useState("Hoy")
+  const [selectedPreset, setSelectedPreset] = useState("Todo")
   const [anchorEl, setAnchorEl] = useState(null)
+
+  useEffect(() => {
+    if (reset) {
+      setSelectedPreset("Todo");
+      setStartDate(null);
+      setEndDate(null);
+      onDateChange({ from: null, to: null });
+    }
+  }, [reset]);
 
   const handlePresetChange = (event) => {
     const value = event.target.value

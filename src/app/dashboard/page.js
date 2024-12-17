@@ -6,7 +6,7 @@ import CitasTable from "@/components/CitasTable";
 import PagosTable from "@/components/PagosTable";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { FormControl, Box, InputLabel, Select, MenuItem as SelectItem, TextField, InputAdornment } from "@mui/material";
+import { FormControl, Box, InputLabel, Select, MenuItem as SelectItem, TextField, InputAdornment, Button } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { DateFilter } from "@/components/date-filter";
 
@@ -24,6 +24,7 @@ export default function DashboardPage() {
 
   // filtros
   const [filtros, setFiltros] = useState({ estado_cliente: "vacio", bound: "vacio",search: "",dateRange: { from: null, to: null } });
+  const [resetFilters, setResetFilters] = useState(false);
 
   const { data: session, status } = useSession();
   //console.log("Session: ",session);
@@ -186,7 +187,18 @@ export default function DashboardPage() {
             <SelectItem value="outbound">Outbound</SelectItem>
           </Select>
         </FormControl>
-        <DateFilter onDateChange={handleDateChange} />        
+        <DateFilter onDateChange={handleDateChange} reset={resetFilters} />      
+        <Button variant="contained" onClick={() => {
+            setFiltros(
+              { estado_cliente: "vacio", 
+                bound: "vacio",
+                search: "",
+                dateRange: { from: null, to: null } })
+                
+            setResetFilters((prev) => !prev);
+            }}>
+          Limpiar
+        </Button>  
       </Box>
       <section style={{ marginTop: "2rem" }}>
         <h2 style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>Clientes</h2>
