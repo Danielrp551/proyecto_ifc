@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function ClientesTable({ 
     data,
@@ -41,6 +42,8 @@ export default function ClientesTable({
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+
+  const router = useRouter();
 
   const handleMenuOpen = (params, event) => {
     setSelectedRow(params.row);
@@ -166,6 +169,10 @@ export default function ClientesTable({
     setOpenSnackbar(false);
 };
 
+  const handleViewDetails = (id) => {
+    router.push(`/clientes/${id}`); // Redirige a la página de detalles del cliente
+  };
+
   return (
     <div style={{ height: 300, width: "100%", border: "1px solid #ddd", borderRadius: "4px" }}>
       <DataGrid
@@ -195,6 +202,7 @@ export default function ClientesTable({
         onClose={handleMenuClose}
       >
         <MenuItem onClick={() => handleAction("comercial")}>Acción Comercial</MenuItem>
+        <MenuItem onClick={() => handleViewDetails(selectedRow?.id)}>Ver Detalles</MenuItem>
         {/*<MenuItem onClick={() => handleAction('detalles')}>Ver Detalles</MenuItem>*/}
       </Menu>
 
