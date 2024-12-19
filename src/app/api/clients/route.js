@@ -9,14 +9,55 @@ export async function GET(request) {
 
     const estados = ["promesas de pago", "seguimiento", "interesado", "activo", "cita agendada", "no interesado","pendiente de contacto","nuevo"]
 
+    // Nuevos parámetros de filtro
+    const estado = url.searchParams.get("estado"); // Filtrar por estado
+    const fechaInicio = url.searchParams.get("fechaInicio"); // Fecha inicial para la última interacción
+    const fechaFin = url.searchParams.get("fechaFin"); // Fecha final para la última interacción
+    const search = url.searchParams.get("search")?.trim(); // Buscar por nombre, celular, o email
+    const bound = url.searchParams.get("bound"); // Filtrar por bound
+
+
+    // Construir condiciones dinámicas
+    const whereConditions = {
+        estado: estado ? { in: [estado] } : { in: estados },
+      };
+
+    if (fechaInicio && fechaFin) {
+    whereConditions.fecha_ultima_interaccion = {
+        gte: new Date(fechaInicio),
+        lte: new Date(fechaFin),
+    };
+    }
+
+    if (search && search.length > 0) {
+      whereConditions.AND = [
+        {
+            OR: [
+                { nombre: { contains: search} },
+                { celular: { contains: search} },
+                { email: { contains: search} },
+            ],
+        },
+    ];
+  }
+
+    if (bound !== null) {
+    whereConditions.bound = bound === "true";
+    }
+
+    console.log("whereConditions", whereConditions);
     // Contar total de clientes
-    const totalClientes = await prisma.clientes.count({where: { estado: { in: estados }},});
+    const totalClientes = await prisma.clientes.count({where: whereConditions,});
+
+    if (totalClientes === null || typeof totalClientes !== "number") {
+      throw new Error("Error al contar los clientes");
+    }
 
     // Obtener clientes paginados
     const clientes = await prisma.clientes.findMany({
       skip: (page - 1) * pageSize,
       take: pageSize,
-      where: { estado: { in: estados }},
+      where: whereConditions,
     });
 
     return NextResponse.json({
