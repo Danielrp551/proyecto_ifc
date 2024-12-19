@@ -46,6 +46,7 @@ model citas {
   estado_cita          String?                @default("agendada") @db.VarChar(25)
   motivo               String                 @db.VarChar(100)
   fecha_creacion       DateTime               @default(now()) @db.DateTime(0)
+  aviso                Int?                   @default(0)
   acciones_comerciales acciones_comerciales[]
   clientes             clientes               @relation(fields: [cliente_id], references: [cliente_id], onDelete: Cascade, onUpdate: NoAction, map: "citas_ibfk_1")
   conversaciones       conversaciones?        @relation(fields: [conversacion_id], references: [conversacion_id], onUpdate: NoAction, map: "citas_ibfk_2")

@@ -20,6 +20,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import LogoutIcon from "@mui/icons-material/Logout";
 import CampaignIcon from '@mui/icons-material/Campaign';
+import PeopleIcon from '@mui/icons-material/People';
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -107,6 +108,20 @@ export default function Layout({ children }) {
           </ListItemIcon>
           <ListItemText primary="Campañas" />
         </ListItem>
+        <ListItem
+          button="true"
+          onClick={() => router.push("/clientes")}
+          sx={{
+            "&:hover": { bgcolor: "#2D3748" },
+            px: 3,
+            py: 1.5,
+          }}
+        >
+          <ListItemIcon sx={{ color: "#fff" }}>
+            <PeopleIcon />
+          </ListItemIcon>
+          <ListItemText primary="Clientes" />
+        </ListItem>
       </List>
       <Divider sx={{ bgcolor: "#2D3748" }} />
       <List>
@@ -129,7 +144,7 @@ export default function Layout({ children }) {
   );
 
   return (
-    <Box sx={{ display: "flex" }}>
+    <Box sx={{ display: "flex", height: "auto" }}>
       <CssBaseline />
       <AppBar
         position="fixed"
@@ -192,6 +207,7 @@ export default function Layout({ children }) {
           p: 3,
           transition: "margin-left 0.3s",
           bgcolor: "#F7FAFC",
+          height: "100%"
         }}
       >
         <Toolbar />
