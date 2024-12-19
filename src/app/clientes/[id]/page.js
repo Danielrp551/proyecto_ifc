@@ -136,7 +136,7 @@ export default function ClientDetails() {
             </Typography>
           </Grid>
           <Grid item xs={12} md={8}>
-            <Tabs value={tabValue} onChange={handleTabChange} aria-label="client details tabs">
+            <Tabs value={tabValue} onChange={handleTabChange} aria-label="client details tabs" scrollButtons="auto" variant="scrollable">
               <Tab label="Información General" />
               <Tab label="Citas" />
               <Tab label="Pagos" />
