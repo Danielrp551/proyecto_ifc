@@ -11,7 +11,8 @@ export async function GET(request) {
   const searchname = url.searchParams.get("search") || null;
   const fromDate = url.searchParams.get("fromDate") || null;
   const toDate = url.searchParams.get("toDate") || null;
-  
+  const reservaCancelada = url.searchParams.get("reservaCancelada") === "true";
+
   const estados = estado? estado.split(',') : ["promesas de pago", "seguimiento", "interesado", "activo", "cita agendada", "no interesado","pendiente de contacto","nuevo"];
   const bound_filter = bound === "inbound"? true : bound === "outbound"? false : null;
 
@@ -49,7 +50,7 @@ export async function GET(request) {
     return NextResponse.json({ citas, pagos });
   }
 
-  const whereClause = {
+  let whereClause = {
     estado: { in: estados },
     ...(bound_filter !== null && { bound: bound_filter }),
     ...(searchname && { OR: [{ nombre: { contains: searchname } }, { apellido: { contains: searchname } }] }),
@@ -61,6 +62,23 @@ export async function GET(request) {
         },
       }),
   };
+
+  if (reservaCancelada) {
+    // Obtener IDs de clientes con al menos una cita eliminada
+    const clientesConCitaEliminada = await prisma.citas.findMany({
+      where: { estado_cita: "eliminada" },
+      select: { cliente_id: true },
+    });
+    const clienteIdsConCitaEliminada = [
+      ...new Set(clientesConCitaEliminada.map((cita) => cita.cliente_id)),
+    ];
+
+    // Agregar al filtro principal
+    whereClause = {
+      ...whereClause,
+      cliente_id: { in: clienteIdsConCitaEliminada },
+    };
+  }
 
   // Paginación general para clientes
   const totalClientes = await prisma.clientes.count({ where: whereClause });
