@@ -18,6 +18,7 @@ export async function PUT(req, { params }) {
         apellido: body.nombreCompleto.split(" ").slice(1).join(" "),
         observaciones: body.observaciones,
         email: body.email,
+        gestor: body.gestor,
       },
     });
 

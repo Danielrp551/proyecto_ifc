@@ -72,6 +72,7 @@ model clientes {
   detalle_no_interes           String?                @db.VarChar(100)
   bound                        Boolean?
   observaciones                String?                @db.Text
+  gestor                       String?                @default("") @db.VarChar(100)
   acciones_comerciales         acciones_comerciales[]
   citas                        citas[]
   cliente_campa_a              cliente_campa_a[]

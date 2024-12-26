@@ -83,6 +83,7 @@ export default function ClientesTable({
           email: editedData.email,
           observaciones: editedData.observaciones,
           notas : notes,
+          gestor : editedData.gestor,
           asesorId : asesor.asesor_id,
         }),
       });
@@ -109,10 +110,12 @@ export default function ClientesTable({
   };
 
   const handleSave = () => {
+    /*
     if (!notes.trim()) {
       setError(true);
       return;
     }
+    */
     // Aquí se implementaría la lógica para guardar los cambios (API o lógica adicional)
     console.log("Datos guardados:", editedData);
     console.log("Notas:", notes);
@@ -154,6 +157,7 @@ export default function ClientesTable({
     fecha_creacion: cliente.fecha_creacion,
     fecha_ultima_interaccion: cliente.fecha_ultima_interaccion,
     observaciones: cliente.observaciones,
+    gestor : cliente.gestor,
   }));
 
   const handleSelectionChange = (newSelection) => {
@@ -236,10 +240,20 @@ export default function ClientesTable({
               <TextField
                 fullWidth
                 margin="normal"
+                label="Gestor"
+                value={editedData.gestor}
+                onChange={(e) => handleInputChange("gestor",e.target.value)}
+              />
+              <TextField
+                fullWidth
+                margin="normal"
                 label="Observaciones"
                 value={editedData.observaciones}
+                multiline
+                rows={4}
                 onChange={(e) => handleInputChange("observaciones",e.target.value)}
               />
+              {/*
               <TextField
                 fullWidth
                 margin="normal"
@@ -251,6 +265,7 @@ export default function ClientesTable({
                 multiline
                 rows={4}
               />
+              */}
             </>
           )}
         </DialogContent>
