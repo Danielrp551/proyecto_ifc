@@ -15,12 +15,43 @@ export async function GET(request) {
     const fechaFin = url.searchParams.get("fechaFin"); // Fecha final para la última interacción
     const search = url.searchParams.get("search")?.trim(); // Buscar por nombre, celular, o email
     const bound = url.searchParams.get("bound"); // Filtrar por bound
-
+    const nuevasConversaciones = url.searchParams.get("nuevasConversaciones") === "true";
 
     // Construir condiciones dinámicas
     const whereConditions = {
         estado: estado ? { in: [estado] } : { in: estados },
       };
+
+    if (nuevasConversaciones) {
+      // Si no se envían fechas, devolver respuesta vacía
+      if (!fechaInicio || !fechaFin) {
+        return NextResponse.json({
+          clientes: [],
+          totalClientes: 0,
+          message: "Para filtrar nuevas conversaciones, se requiere un rango de fechas.",
+        });
+      }
+
+      whereConditions.AND = [
+        {
+          fecha_creacion: {
+            lt: new Date(fechaInicio), // Cliente creado antes del rango de fechas
+          },
+        },
+        {
+          fecha_ultima_interaccion: {
+            not: null, // Solo clientes con interacciones previas
+            gte: new Date(fechaInicio),
+            lte: new Date(fechaFin), // Interacción dentro del rango de fechas
+          },
+        },
+      ];
+    } else if (fechaInicio && fechaFin) {
+      whereConditions.fecha_ultima_interaccion = {
+        gte: new Date(fechaInicio),
+        lte: new Date(fechaFin),
+      };
+    }
 
     if (fechaInicio && fechaFin) {
     whereConditions.fecha_ultima_interaccion = {

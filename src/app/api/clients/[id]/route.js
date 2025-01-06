@@ -19,6 +19,7 @@ export async function PUT(req, { params }) {
         observaciones: body.observaciones,
         email: body.email,
         gestor: body.gestor,
+        acciones: body.acciones,
       },
     });
 

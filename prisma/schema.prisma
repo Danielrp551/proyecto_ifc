@@ -73,6 +73,7 @@ model clientes {
   bound                        Boolean?
   observaciones                String?                @db.Text
   gestor                       String?                @default("") @db.VarChar(100)
+  acciones                     String?                @default("") @db.VarChar(50)
   acciones_comerciales         acciones_comerciales[]
   citas                        citas[]
   cliente_campa_a              cliente_campa_a[]

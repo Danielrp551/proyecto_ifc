@@ -18,6 +18,7 @@ export default function DashboardPage() {
   const [pagos, setPagos] = useState([]);
   const [selectedClientes, setSelectedClientes] = useState([]);
   const [refresh, setRefresh] = useState(false); // Actualiza la tabla de clientes
+  const [asesores, setAsesores] = useState([]);
 
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
@@ -101,6 +102,21 @@ export default function DashboardPage() {
 
     fetchCitasYPagos();
   }, [selectedClientes, pageSize, currentPage, refresh, filtros.estado_cliente, filtros.bound,filtros.dateRange,filtros.reservaCancelada]);
+
+  useEffect(() => {
+    async function fetchAsesores() {
+      try {
+        const res = await fetch("/api/gestores");
+        const data = await res.json();
+        console.log("Asesores:", data.asesores);
+        setAsesores(data.asesores);
+      } catch (error) {
+        console.error("Error fetching asesores:", error);
+      }
+    }
+    fetchAsesores();
+
+  },[])
 
   const handleInputChange = (field, value) => {
     setFiltros((prev) => ({
@@ -255,6 +271,7 @@ export default function DashboardPage() {
           setSelectedClientes={setSelectedClientes}
           asesor={session.user.asesor}
           setRefresh={() => setRefresh((prev) => !prev)}
+          asesores = {asesores}
         />
       </section>
 
