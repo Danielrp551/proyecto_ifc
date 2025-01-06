@@ -77,20 +77,22 @@ export default function ClientesTable({
 
   const saveChanges = async () => {
     try {
+      const body = JSON.stringify({
+        nombreCompleto: editedData.nombreCompleto,
+        email: editedData.email === ""? null : editedData.email,
+        observaciones: editedData.observaciones,
+        notas: notes,
+        gestor: editedData.gestor,
+        asesorId: asesor.asesor_id,
+        acciones: editedData.acciones,
+      });
+      console.log("Body guardadar:", body);
       const response = await fetch(`/api/clients/${editedData.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          nombreCompleto: editedData.nombreCompleto,
-          email: editedData.email,
-          observaciones: editedData.observaciones,
-          notas: notes,
-          gestor: editedData.gestor,
-          asesorId: asesor.asesor_id,
-          acciones: editedData.acciones,
-        }),
+        body: body,
       });
 
       if (!response.ok) {
