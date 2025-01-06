@@ -10,6 +10,23 @@ export async function PUT(req, { params }) {
   const body = await req.json(); // Parsear el body de la solicitud
 
   try {
+    // Obtener el cliente actual para verificar su gestor antes de actualizarlo
+    const clienteActual = await prisma.clientes.findUnique({
+      where: { cliente_id: parseInt(id) },
+      select: { gestor: true },
+    });
+
+    if (!clienteActual) {
+      return NextResponse.json({ error: "Cliente no encontrado" }, { status: 404 });
+    }
+
+    const gestorAnterior = clienteActual.gestor; // Gestor antes de la actualización
+    const gestorNuevo = body.gestor; // Nuevo gestor enviado desde el body
+
+    // Descomponer el nombre y apellido del gestor
+    const [nombreAnterior, ...apellidosAnteriores] = gestorAnterior ? gestorAnterior.split(" ") : [];
+    const [nombreNuevo, ...apellidosNuevos] = gestorNuevo ? gestorNuevo.split(" ") : [];
+
     // Actualiza el cliente en la base de datos
     const updatedClient = await prisma.clientes.update({
       where: { cliente_id: parseInt(id) },
@@ -18,10 +35,35 @@ export async function PUT(req, { params }) {
         apellido: body.nombreCompleto.split(" ").slice(1).join(" "),
         observaciones: body.observaciones,
         email: body.email,
-        gestor: body.gestor,
+        gestor: gestorNuevo,
         acciones: body.acciones,
       },
     });
+
+    // Actualizar la tabla asesor si el gestor cambió
+    if (gestorAnterior !== gestorNuevo) {
+      if (gestorAnterior !== "") {
+        // Restar 1 al `num_leads` del asesor anterior
+        await prisma.asesor.updateMany({
+          where: {
+            nombre: nombreAnterior,
+            primer_apellido: apellidosAnteriores.join(" "),
+          },
+          data: { num_leads: { decrement: 1 } },
+        });
+      }
+
+      if (gestorNuevo !== "") {
+        // Sumar 1 al `num_leads` del nuevo asesor
+        await prisma.asesor.updateMany({
+          where: {
+            nombre: nombreNuevo,
+            primer_apellido: apellidosNuevos.join(" "),
+          },
+          data: { num_leads: { increment: 1 } },
+        });
+      }
+    }
 
     // Registra la acción comercial
     await prisma.acciones_comerciales.create({

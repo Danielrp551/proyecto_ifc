@@ -82,11 +82,11 @@ export default function ClientesTable({
         email: editedData.email === ""? null : editedData.email,
         observaciones: editedData.observaciones,
         notas: notes,
-        gestor: editedData.gestor,
+        gestor: editedData.gestor=== " - "? "" : editedData.gestor,
         asesorId: asesor.asesor_id,
         acciones: editedData.acciones,
       });
-      console.log("Body guardadar:", body);
+      console.log("Body guardar:", body);
       const response = await fetch(`/api/clients/${editedData.id}`, {
         method: "PUT",
         headers: {

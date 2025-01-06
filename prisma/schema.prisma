@@ -32,6 +32,7 @@ model asesor {
   segundo_apellido     String?                @db.VarChar(120)
   celular              String?                @db.VarChar(12)
   usuario_id           Int
+  num_leads            Int?                   @default(0)
   acciones_comerciales acciones_comerciales[]
   usuario              usuario                @relation(fields: [usuario_id], references: [usuario_id], onDelete: Cascade, onUpdate: NoAction, map: "asesor_ibfk_1")
 
