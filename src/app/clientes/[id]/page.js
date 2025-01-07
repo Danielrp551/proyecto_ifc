@@ -389,11 +389,11 @@ export default function ClientDetails() {
                           )}
 
                           {/* Mensaje del chatbot */}
-                          {message.mensaje_chatbot && (
-                            <Box className="mb-4 flex justify-start">
+                          {message.mensaje_chatbot && message.mensaje_chatbot.split('|').map((botMessage, index) => (
+                            <Box key={`bot-message-${index}`} className="mb-4 flex justify-start">
                               <Box className="p-3 rounded-lg max-w-[70%] bg-blue-100 text-blue-800">
                                 <Typography variant="body1">
-                                  {message.mensaje_chatbot}
+                                  {botMessage.trim()}
                                 </Typography>
                                 <Typography
                                   variant="caption"
@@ -403,19 +403,19 @@ export default function ClientDetails() {
                                     ? new Date(message.fecha).toLocaleString(
                                         "es-ES",
                                         {
-                                          weekday: "long", // Muestra el día de la semana (ej. lunes)
-                                          year: "numeric", // Muestra el año
-                                          month: "long", // Muestra el nombre del mes completo (ej. enero)
-                                          day: "numeric", // Muestra el día
-                                          hour: "2-digit", // Muestra la hora con dos dígitos
-                                          minute: "2-digit", // Muestra los minutos con dos dígitos
+                                          weekday: "long",
+                                          year: "numeric",
+                                          month: "long",
+                                          day: "numeric",
+                                          hour: "2-digit",
+                                          minute: "2-digit",
                                         }
                                       )
                                     : "Fecha no disponible"}
                                 </Typography>
                               </Box>
                             </Box>
-                          )}
+                          ))}
                         </React.Fragment>
                       ))}
                   </Paper>
