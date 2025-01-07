@@ -131,6 +131,7 @@ export default function ClientsManagement() {
       ...prev,
       [field]: value,
     }));
+    setPage(0); // Reinicia a la primera página
   };
 
   // New function to handle date range changes
