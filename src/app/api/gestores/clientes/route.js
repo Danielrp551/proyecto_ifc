@@ -17,6 +17,8 @@ export async function GET(request) {
     const pageNumber = parseInt(page, 10);
     const pageSizeNumber = parseInt(pageSize, 10);
 
+    const estados = ["promesas de pago", "seguimiento", "interesado", "activo", "cita agendada", "no interesado","pendiente de contacto","nuevo"]
+
     // Calcular el desplazamiento
     const skip = (pageNumber - 1) * pageSizeNumber;
 
@@ -67,6 +69,7 @@ export async function GET(request) {
         ...fechaFilter,
         ...accionFilter,
         ...searchFilter,
+        estado: { in: estados },
       },
       skip: skip,
       take: pageSizeNumber,
@@ -94,6 +97,7 @@ export async function GET(request) {
         ...fechaFilter,
         ...accionFilter,
         ...searchFilter,
+        estado: { in: estados },
       },
     });
 

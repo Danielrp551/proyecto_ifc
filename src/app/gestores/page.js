@@ -23,13 +23,22 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem ,
+  MenuItem,
   Chip,
+  IconButton,
+  Menu,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { getActionInfo } from "@/app/utils/actionMapping";
 import { getStateInfo } from "@/app/utils/stateMapping";
 import { DateFilterv2 } from "@/components/date-filter_v2";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 const GestoresPage = () => {
   const [gestores, setGestores] = useState([]);
@@ -55,6 +64,25 @@ const GestoresPage = () => {
   const [selectedPreset, setSelectedPreset] = useState("Todo");
 
   const [resetFilters, setResetFilters] = useState(false);
+
+  const [editedData, setEditedData] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState("");
+  const [notes, setNotes] = useState("");
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+
+  const [refresh, setRefresh] = useState(false);
+
+  const router = useRouter();
+
+const { data: session, status } = useSession();
+//console.log("Session: ",session);
+if (session) {
+    const asesor = session.user?.asesor;
+    console.log("Asesor: ", asesor);
+}
 
   useEffect(() => {
     const fetchGestores = async () => {
@@ -83,9 +111,10 @@ const GestoresPage = () => {
       try {
         const search = filtros.search !== "" ? `&search=${filtros.search}` : "";
         const asesor = filtros.asesor !== "" ? `&asesor=${filtros.asesor}` : "";
-        const dateRange = filtros.dateRange.from && filtros.dateRange.to
-          ? `&fechaInicio=${filtros.dateRange.from.toISOString()}&fechaFin=${filtros.dateRange.to.toISOString()}`
-          : "";
+        const dateRange =
+          filtros.dateRange.from && filtros.dateRange.to
+            ? `&fechaInicio=${filtros.dateRange.from.toISOString()}&fechaFin=${filtros.dateRange.to.toISOString()}`
+            : "";
         const accion =
           filtros.acciones !== "" ? `&accion=${filtros.acciones}` : "";
         const response = await fetch(
@@ -108,7 +137,7 @@ const GestoresPage = () => {
     };
 
     fetchClientesGestores();
-  }, [page, pageSize, filtros]);
+  }, [page, pageSize, filtros, refresh]);
 
   const handleChangePage = (_, newPage) => setPage(newPage);
   const handleChangePageSize = (event) => {
@@ -123,6 +152,13 @@ const GestoresPage = () => {
     }));
     setPage(0); // Reinicia a la primera página
   };
+
+  const handleInputChangeModal = (field, value) => {
+    setEditedData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  }
 
   const handleCloseSnackbar = () => setOpenSnackbar(false);
 
@@ -142,6 +178,90 @@ const GestoresPage = () => {
       dateRange: dateRange,
     }));
     setPage(0); // Reinicia a la primera página
+  };
+
+  const handleMenuOpen = (event, client) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedClient(client);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedClient(null);
+  };
+
+  const handleAccionComercial = () => {
+    setDialogTitle("Acción Comercial");
+    setEditedData({
+      ...selectedClient,
+      nombreCompleto: selectedClient.nombre + " " + selectedClient.apellido,
+    });
+    setOpenDialog(true);
+    handleMenuClose();
+    console.log("Acción Comercial de:", selectedClient);
+  };
+
+  const handleDialogClose = () => {
+    setOpenDialog(false);
+    //setNotes("");
+    setError(false);
+    setEditedData(null);
+  };
+
+  const handleVerDetalles = () => {
+    console.log("Ver Detalles de:", selectedClient);
+    // Aquí iría la lógica para navegar a la página de detalles del cliente
+    if (selectedClient) {
+      router.push(`/clientes/${selectedClient.cliente_id}`);
+    }
+    handleMenuClose();
+  };
+
+  const saveChanges = async () => {
+    try {
+      const body = JSON.stringify({
+        nombreCompleto: editedData.nombreCompleto,
+        email: editedData.email === "" ? null : editedData.email,
+        observaciones: editedData.observaciones,
+        notas: notes,
+        gestor: editedData.gestor === " - " ? "" : editedData.gestor,
+        asesorId: session.user?.asesor.asesor_id,
+        acciones: editedData.acciones,
+      });
+      console.log("Body guardar:", body);
+      const response = await fetch(`/api/clients/${editedData.cliente_id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: body,
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al guardar los cambios.");
+      }
+
+      const data = await response.json();
+      console.log("Cambios guardados:", data);
+
+      setRefresh((prev) => !prev)
+      // Cerrar el diálogo después de guardar
+      handleDialogClose();
+      setSnackbarMessage("Acción comercial guardada exitosamente");
+      setSnackbarSeverity("success");
+      setOpenSnackbar(true);
+    } catch (error) {
+      console.error("Error al guardar cambios:", error.message);
+      setSnackbarMessage("Error al crear la acción comercial");
+      setSnackbarSeverity("error");
+      setOpenSnackbar(true);
+    }
+  };
+
+  const handleSave = () => {
+    console.log("Datos guardados:", editedData);
+    console.log("Notas:", notes);
+    saveChanges();
   };
 
   return (
@@ -275,7 +395,7 @@ const GestoresPage = () => {
                   <TableCell>Estado</TableCell>
                   <TableCell>Acción</TableCell>
                   <TableCell>Gestor</TableCell>
-                  {/*<TableCell>Acciones</TableCell>*/}
+                  <TableCell>Acciones</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -292,7 +412,9 @@ const GestoresPage = () => {
                             : "bg-blue-50" // Azul claro si está gestionado
                         }`}
                       >
-                        <TableCell>{cliente.nombre + " " + cliente.apellido}</TableCell>
+                        <TableCell>
+                          {cliente.nombre + " " + cliente.apellido}
+                        </TableCell>
                         <TableCell>{cliente.celular}</TableCell>
                         <TableCell>
                           <Chip
@@ -317,17 +439,15 @@ const GestoresPage = () => {
                         <TableCell>
                           {cliente.gestor === "" ? " - " : cliente.gestor}
                         </TableCell>
-                        {/*
-                      <TableCell>
-                        <Button
-                          startIcon={<InfoIcon />}
-                          variant="outlined"
-                          color="primary"
-                        >
-                          Ver Detalles
-                        </Button>
-                      </TableCell>
-                      */}
+
+                        <TableCell>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => handleMenuOpen(e, cliente)}
+                          >
+                            <MoreVertIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
                       </TableRow>
                     );
                   })
@@ -351,6 +471,17 @@ const GestoresPage = () => {
             rowsPerPageOptions={[5, 10, 20]}
             onRowsPerPageChange={handleChangePageSize}
           />
+
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleMenuClose}
+          >
+            <MenuItem onClick={handleAccionComercial}>
+              Acción Comercial
+            </MenuItem>
+            <MenuItem onClick={handleVerDetalles}>Ver Detalles</MenuItem>
+          </Menu>
         </>
       )}
 
@@ -359,10 +490,105 @@ const GestoresPage = () => {
         autoHideDuration={4000}
         onClose={handleCloseSnackbar}
       >
-        <Alert onClose={handleCloseSnackbar} severity="error">
+        <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity}>
           {snackbarMessage}
         </Alert>
       </Snackbar>
+      <Dialog
+        open={openDialog}
+        onClose={handleDialogClose}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>{dialogTitle}</DialogTitle>
+        <DialogContent>
+          {editedData && (
+            <>
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Nombre"
+                value={editedData.nombreCompleto}
+                onChange={(e) =>
+                    handleInputChangeModal("nombreCompleto", e.target.value)
+                }
+              />
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Email"
+                value={editedData.email || ""}
+                onChange={(e) => handleInputChangeModal("email", e.target.value)}
+              />
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Teléfono"
+                value={editedData.celular}
+                InputProps={{ readOnly: true }}
+              />
+              <FormControl fullWidth variant="outlined" size="medium">
+                <InputLabel htmlFor="gestor">Gestor</InputLabel>
+                <Select
+                  fullWidth
+                  label="Gestor"
+                  margin="normal"
+                  value={editedData.gestor === ""? " - " : editedData.gestor}
+                  onChange={(e) => handleInputChangeModal("gestor", e.target.value)}
+                >
+                  <MenuItem value=" - ">Sin gestor asignado</MenuItem>
+                  {gestores.map((gestor) => (
+                    <MenuItem
+                      key={gestor.asesor_id}
+                      value={gestor.nombre + " " + gestor.primer_apellido}
+                    >
+                      {gestor.nombre} {gestor.primer_apellido}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Observaciones"
+                value={editedData.observaciones || ""}
+                multiline
+                rows={4}
+                onChange={(e) =>
+                    handleInputChangeModal("observaciones", e.target.value)
+                }
+              />
+              <FormControl fullWidth variant="outlined" size="medium">
+                <InputLabel htmlFor="acciones">Acciones</InputLabel>
+                <Select
+                  fullWidth
+                  label="Acciones"
+                  margin="normal"
+                  value={editedData.acciones}
+                  onChange={(e) =>
+                    handleInputChangeModal("acciones", e.target.value)
+                  }
+                >
+                  <MenuItem value="cita_agendada">Cita Agendada</MenuItem>
+                  <MenuItem value="volver_contactar">
+                    Volver a contactar
+                  </MenuItem>
+                  <MenuItem value="atendio_otro_lugar">
+                    Atendió en otro lugar
+                  </MenuItem>
+                  <MenuItem value="no_interesado">No Interesado</MenuItem>
+                </Select>
+              </FormControl>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose}>Cerrar</Button>
+          <Button onClick={handleSave} variant="contained" color="primary">
+            Guardar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
