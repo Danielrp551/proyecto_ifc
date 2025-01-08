@@ -22,23 +22,48 @@ export async function GET(request) {
     const mongoClient = await clientPromise;
     const db = mongoClient.db(process.env.MONGODB_DB);
 
-    // Consulta en la colección "clientes" para filtrar documentos por rango de fechas
-    const clientes = await db.collection("clientes").find({
-      "conversaciones.interacciones.fecha": {
-        $gte: fechaInicioObj,
-        $lte: fechaFinObj,
+    // Consulta en la colección de "clientes"
+    const clientes = await db.collection("clientes").aggregate([
+      {
+        $match: {
+          "conversaciones.interacciones.fecha": {
+            $gte: fechaInicioObj,
+            $lte: fechaFinObj,
+          },
+        },
       },
-    }).project({ nombre: 1, celular: 1, email: 1 }).toArray(); // Retorna solo los campos necesarios
+      {
+        $unwind: "$conversaciones",
+      },
+      {
+        $unwind: "$conversaciones.interacciones",
+      },
+      {
+        $match: {
+          "conversaciones.interacciones.fecha": {
+            $gte: fechaInicioObj,
+            $lte: fechaFinObj,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalInteracciones: { $sum: 1 },
+        },
+      },
+    ]).toArray();
+
+    const totalInteracciones = clientes.length > 0 ? clientes[0].totalInteracciones : 0;
 
     // Respuesta
     return NextResponse.json({
-      totalClientes: clientes.length,
-      clientes,
+      totalInteracciones,
     });
   } catch (error) {
-    console.error("Error al obtener clientes:", error);
+    console.error("Error al obtener interacciones:", error);
     return NextResponse.json(
-      { message: "Error interno del servidor al obtener clientes" },
+      { message: "Error interno del servidor al obtener interacciones" },
       { status: 500 }
     );
   }
