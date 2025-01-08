@@ -50,7 +50,7 @@ const presets = [
   },
 ]
 
-export function DateFilterv2({ onDateChange, reset, setStartDate, setEndDate,setSelectedPreset, startDate, endDate,selectedPreset }) {
+export function DateFilterv2({ onDateChange, reset, setStartDate, setEndDate,setSelectedPreset, startDate, endDate,selectedPreset, TodoExist =true }) {
   //const [startDate, setStartDate] = useState(new Date())
   //const [endDate, setEndDate] = useState(new Date())
   //const [selectedPreset, setSelectedPreset] = useState("Todo")
@@ -106,11 +106,13 @@ export function DateFilterv2({ onDateChange, reset, setStartDate, setEndDate,set
         onChange={handlePresetChange}
         sx={{ minWidth: 180, backgroundColor: "#ffffff" }}
       >
-        {presets.map((preset) => (
-          <MenuItem key={preset.label} value={preset.label}>
-            {preset.label}
-          </MenuItem>
-        ))}
+        {presets
+          .filter((preset) => TodoExist || preset.label !== "Todo") // Excluir "Todo" si TodoExist es false
+          .map((preset) => (
+            <MenuItem key={preset.label} value={preset.label}>
+              {preset.label}
+            </MenuItem>
+          ))}
         <MenuItem value="Rango específico">Rango específico</MenuItem>
       </TextField>
 

@@ -23,6 +23,7 @@ import CampaignIcon from '@mui/icons-material/Campaign';
 import PeopleIcon from '@mui/icons-material/People';
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import BadgeIcon from "@mui/icons-material/Badge";
+import ContactPageIcon from "@mui/icons-material/ContactPage";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 
@@ -65,6 +66,20 @@ export default function Layout({ children }) {
       </Toolbar>
       <Divider sx={{ bgcolor: "#2D3748" }} />
       <List>
+        <ListItem
+          button="true"
+          onClick={() => router.push("/leads")}
+          sx={{
+            "&:hover": { bgcolor: "#2D3748" },
+            px: 3,
+            py: 1.5,
+          }}
+        >
+          <ListItemIcon sx={{ color: "#fff" }}>
+            <ContactPageIcon />
+          </ListItemIcon>
+          <ListItemText primary="Leads" />
+        </ListItem>
         <ListItem
           button="true"
           onClick={() => router.push("/dashboard")}
