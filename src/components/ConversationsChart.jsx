@@ -14,6 +14,7 @@ import {
   Skeleton,
   Snackbar,
   Alert,
+  Grid,
 } from "@mui/material";
 import {
   BarChart,
@@ -26,7 +27,7 @@ import {
 } from "recharts";
 import { endOfDay, startOfDay, set } from "date-fns";
 import { DateFilterv2 } from "./date-filter_v2";
-import { blue, green, orange, red, grey, yellow } from '@mui/material/colors';
+import { blue, green, orange, red, grey, yellow } from "@mui/material/colors";
 
 const stateMapping = {
   "no interesado": {
@@ -67,7 +68,6 @@ const stateMapping = {
 };
 
 export default function ConversationsChart() {
-  const [timeFrame, setTimeFrame] = useState("hoy");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -83,8 +83,13 @@ export default function ConversationsChart() {
 
   const [resetFilters, setResetFilters] = useState(false);
 
+  const [gestores, setGestores] = useState([]);
+
   const [filtros, setFiltros] = useState({
     dateRange: { from: startOfDay(new Date()), to: endOfDay(new Date()) },
+    estado: "",
+    gestor: "",
+    accion: "",
   });
 
   useEffect(() => {
@@ -92,12 +97,15 @@ export default function ConversationsChart() {
       setLoading(true);
       setError(null);
       try {
+        const estado = filtros.estado ? `&estado=${filtros.estado}` : "";
+        const gestor = filtros.gestor ? `&asesor=${filtros.gestor}` : "";
+        const accion = filtros.accion ? `&accion=${filtros.accion}` : "";
         const dateRange =
           filtros.dateRange.from && filtros.dateRange.to
             ? `&fechaInicio=${filtros.dateRange.from.toISOString()}&fechaFin=${filtros.dateRange.to.toISOString()}`
             : "";
         const response = await fetch(
-          `/api/dashboard/conversaciones?${dateRange}`
+          `/api/dashboard/conversaciones?${dateRange}${estado}${gestor}${accion}`
         );
         const data = await response.json();
         console.log("data", data);
@@ -105,6 +113,7 @@ export default function ConversationsChart() {
         setResumen({
           conversacionesGestionadas: data.conversacionesGestionadas,
           conversacionesPorEstado: data.conversacionesPorEstado,
+          conversacionesCitaAgendadaAccion: data.numCitaAgendada,
         });
         setTotalConversaciones(data.totalConversaciones);
       } catch (err) {
@@ -123,35 +132,52 @@ export default function ConversationsChart() {
 
   useEffect(() => {
     const fetchInteracciones = async () => {
-        setLoading(true);
-        setError(null);
-        try{
-            const dateRange =
-            filtros.dateRange.from && filtros.dateRange.to
-              ? `&fechaInicio=${filtros.dateRange.from.toISOString()}&fechaFin=${filtros.dateRange.to.toISOString()}`
-              : "";           
-            const response = await fetch(
-                `/api/dashboard/interacciones?${dateRange}`
-              );
-              const data = await response.json();
-              console.log("data interacciones", data);
-        } catch(err){
-            console.error("Error al cargar los datos de los gestores:", err);
-            setError("Error al cargar los datos de los gestores");
-            setSnackbarMessage("Error al cargar gestores");
-            setSnackbarSeverity("error");
-            setOpenSnackbar(true);
-        } finally{
-            setLoading(false);
-        }
-    }
+      setLoading(true);
+      setError(null);
+      try {
+        const dateRange =
+          filtros.dateRange.from && filtros.dateRange.to
+            ? `&fechaInicio=${filtros.dateRange.from.toISOString()}&fechaFin=${filtros.dateRange.to.toISOString()}`
+            : "";
+        const response = await fetch(
+          `/api/dashboard/interacciones?${dateRange}`
+        );
+        const data = await response.json();
+        console.log("data interacciones", data);
+      } catch (err) {
+        console.error("Error al cargar los datos de los gestores:", err);
+        setError("Error al cargar los datos de los gestores");
+        setSnackbarMessage("Error al cargar gestores");
+        setSnackbarSeverity("error");
+        setOpenSnackbar(true);
+      } finally {
+        setLoading(false);
+      }
+    };
 
     fetchInteracciones();
   }, []);
 
-  const handleChange = (event) => {
-    setTimeFrame(event.target.value);
-  };
+  useEffect(() => {
+    const fetchGestores = async () => {
+        setLoading(true);
+        try {
+          const response = await fetch(`/api/gestores?`);
+          const data = await response.json();
+          console.log("data asesores", data);
+          setGestores(data.asesores);
+        } catch (err) {
+          setError("Error al cargar los datos de los gestores");
+          setSnackbarMessage("Error al cargar gestores");
+          setOpenSnackbar(true);
+        } finally {
+          setLoading(false);
+        }
+      };
+  
+      fetchGestores();   
+  }, []);
+
   const handleCloseSnackbar = () => setOpenSnackbar(false);
 
   const handleDateChange = (dateRange) => {
@@ -160,6 +186,13 @@ export default function ConversationsChart() {
       dateRange: dateRange,
     }));
     //setPage(0); // Reinicia a la primera página
+  };
+
+  const handleInputChange = (field, value) => {
+    setFiltros((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
   return (
@@ -191,16 +224,19 @@ export default function ConversationsChart() {
               </Typography>
               <Divider className="my-2" />
               <Typography variant="body2" className="text-gray-600">
-              Conversaciones gestionadas: <strong>{resumen.conversacionesGestionadas}</strong>
+                Conversaciones gestionadas:{" "}
+                <strong>{resumen.conversacionesGestionadas}</strong>
               </Typography>
               <Divider className="my-2" />
               <Typography variant="subtitle2" className="mt-2 mb-1">
                 Conversaciones por estado:
               </Typography>
               {Object.entries(resumen.conversacionesPorEstado || {})
-              .filter(([state]) => !["nuevo", "contactado", "otro_estado"].includes(state))
-              .map(
-                ([state, count]) => (
+                .filter(
+                  ([state]) =>
+                    !["nuevo", "contactado", "cita agendada"].includes(state)
+                )
+                .map(([state, count]) => (
                   <Typography
                     key={state}
                     variant="body2"
@@ -220,8 +256,23 @@ export default function ConversationsChart() {
                   >
                     {stateMapping[state]?.text || state}: {count}
                   </Typography>
-                )
-              )}
+                ))}
+                { resumen.conversacionesCitaAgendadaAccion != 0 && (
+                <Typography
+                    variant="body2"
+                    style={{
+                    backgroundColor: stateMapping["cita agendada"].color,
+                    color: stateMapping["cita agendada"].textColor,
+                    padding: "2px 6px",
+                    borderRadius: "4px",
+                    marginBottom: "4px",
+                    display: "inline-block",
+                    marginRight: "4px",
+                    }}
+                >
+                    {stateMapping["cita agendada"].text}: {resumen.conversacionesCitaAgendadaAccion}
+                </Typography>
+                )}
             </>
           )}
         </CardContent>
@@ -233,17 +284,77 @@ export default function ConversationsChart() {
           <Typography variant="h6" gutterBottom>
             Conversaciones
           </Typography>
-          <DateFilterv2
-            onDateChange={handleDateChange}
-            reset={resetFilters}
-            setStartDate={setStartDate}
-            setEndDate={setEndDate}
-            setSelectedPreset={setSelectedPreset}
-            startDate={startDate}
-            endDate={endDate}
-            selectedPreset={selectedPreset}
-            TodoExist={false}
-          />
+          <Grid container spacing={2} className="mb-4">
+            <Grid item xs={12} md={12}>
+              <DateFilterv2
+                onDateChange={handleDateChange}
+                reset={resetFilters}
+                setStartDate={setStartDate}
+                setEndDate={setEndDate}
+                setSelectedPreset={setSelectedPreset}
+                startDate={startDate}
+                endDate={endDate}
+                selectedPreset={selectedPreset}
+                TodoExist={false}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Estado</InputLabel>
+                <Select
+                  value={filtros.estado}
+                  onChange={(e) => handleInputChange("estado", e.target.value)}
+                  label="Estado"
+                >
+                  <MenuItem value="">Todos</MenuItem>
+                  {Object.keys(stateMapping)
+                    .filter((state) => !["default"].includes(state))
+                    .map((state) => (
+                    <MenuItem key={state} value={state}>
+                      {stateMapping[state].text}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Gestor</InputLabel>
+                <Select
+                  value={filtros.gestor}
+                  onChange={(e) => handleInputChange("gestor", e.target.value)}
+                  label="Gestor"
+                >
+                  <MenuItem value="">Todos</MenuItem>
+                    {gestores.map((gestor) => (
+                        <MenuItem key={gestor.asesor_id} value={gestor.nombre + " " + gestor.primer_apellido}>
+                        {gestor.nombre} {gestor.primer_apellido}
+                        </MenuItem>
+                    ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Acción</InputLabel>
+                <Select
+                  value={filtros.accion}
+                  onChange={(e) => handleInputChange("accion", e.target.value)}
+                  label="Acción"
+                >
+                  <MenuItem value="">Todas</MenuItem>
+                  <MenuItem value="cita_agendada">Cita Agendada</MenuItem>
+                  <MenuItem value="volver_contactar">
+                    Volver a contactar
+                  </MenuItem>
+                  <MenuItem value="atendio_otro_lugar">
+                    Atendió en otro lugar
+                  </MenuItem>
+                  <MenuItem value="no_interesado">No interesado</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
           {loading ? (
             <Skeleton variant="rectangular" width="100%" height={300} />
           ) : error ? (
