@@ -31,6 +31,10 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Grid,
+  List,
+  ListItem,
+  ListItemText,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -73,16 +77,21 @@ const GestoresPage = () => {
   const [selectedClient, setSelectedClient] = useState(null);
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
+  const [openConversationDialog, setOpenConversationDialog] = useState(false);
+  const [conversationLoading, setConversationLoading] = useState(false);
+  const [conversationData, setConversationData] = useState(null);
+  const [selectedConversation, setSelectedConversation] = useState(0);
+
   const [refresh, setRefresh] = useState(false);
 
   const router = useRouter();
 
-const { data: session, status } = useSession();
-//console.log("Session: ",session);
-if (session) {
+  const { data: session, status } = useSession();
+  //console.log("Session: ",session);
+  if (session) {
     const asesor = session.user?.asesor;
     console.log("Asesor: ", asesor);
-}
+  }
 
   useEffect(() => {
     const fetchGestores = async () => {
@@ -158,7 +167,7 @@ if (session) {
       ...prev,
       [field]: value,
     }));
-  }
+  };
 
   const handleCloseSnackbar = () => setOpenSnackbar(false);
 
@@ -244,7 +253,7 @@ if (session) {
       const data = await response.json();
       console.log("Cambios guardados:", data);
 
-      setRefresh((prev) => !prev)
+      setRefresh((prev) => !prev);
       // Cerrar el diálogo después de guardar
       handleDialogClose();
       setSnackbarMessage("Acción comercial guardada exitosamente");
@@ -262,6 +271,44 @@ if (session) {
     console.log("Datos guardados:", editedData);
     console.log("Notas:", notes);
     saveChanges();
+  };
+
+  const handleAction = (action) => {
+    if (action === "comercial") {
+      setDialogTitle("Acción Comercial (Cliente)");
+      setOpenDialog(true);
+    } else if (action === "conversacion") {
+      setOpenConversationDialog(true);
+      fetchConversation(selectedClient.cliente_id);
+    }
+
+    handleMenuClose();
+  };
+
+  const handleConversationDialogClose = () => {
+    setOpenConversationDialog(false);
+    setConversationData(null);
+    setSelectedConversation(0);
+  };
+
+  const fetchConversation = async (clientId) => {
+    setConversationLoading(true);
+    try {
+      const response = await fetch(`/api/dashboard/conversaciones/${clientId}`);
+      if (!response.ok) {
+        throw new Error("Error al cargar la conversación");
+      }
+      const data = await response.json();
+      setConversationData(data.conversaciones);
+      console.log("Conversación cargada:", data);
+    } catch (error) {
+      console.error("Error fetching conversation:", error);
+      setSnackbarMessage("Error al cargar la conversación");
+      setSnackbarSeverity("error");
+      setOpenSnackbar(true);
+    } finally {
+      setConversationLoading(false);
+    }
   };
 
   return (
@@ -482,6 +529,9 @@ if (session) {
               Acción Comercial
             </MenuItem>
             <MenuItem onClick={handleVerDetalles}>Ver Detalles</MenuItem>
+            <MenuItem onClick={() => handleAction("conversacion")}>
+              Ver Conversación
+            </MenuItem>
           </Menu>
         </>
       )}
@@ -511,7 +561,7 @@ if (session) {
                 label="Nombre"
                 value={editedData.nombreCompleto}
                 onChange={(e) =>
-                    handleInputChangeModal("nombreCompleto", e.target.value)
+                  handleInputChangeModal("nombreCompleto", e.target.value)
                 }
               />
               <TextField
@@ -519,7 +569,9 @@ if (session) {
                 margin="normal"
                 label="Email"
                 value={editedData.email || ""}
-                onChange={(e) => handleInputChangeModal("email", e.target.value)}
+                onChange={(e) =>
+                  handleInputChangeModal("email", e.target.value)
+                }
               />
               <TextField
                 fullWidth
@@ -534,8 +586,10 @@ if (session) {
                   fullWidth
                   label="Gestor"
                   margin="normal"
-                  value={editedData.gestor === ""? " - " : editedData.gestor}
-                  onChange={(e) => handleInputChangeModal("gestor", e.target.value)}
+                  value={editedData.gestor === "" ? " - " : editedData.gestor}
+                  onChange={(e) =>
+                    handleInputChangeModal("gestor", e.target.value)
+                  }
                 >
                   <MenuItem value=" - ">Sin gestor asignado</MenuItem>
                   {gestores.map((gestor) => (
@@ -556,7 +610,7 @@ if (session) {
                 multiline
                 rows={4}
                 onChange={(e) =>
-                    handleInputChangeModal("observaciones", e.target.value)
+                  handleInputChangeModal("observaciones", e.target.value)
                 }
               />
               <FormControl fullWidth variant="outlined" size="medium">
@@ -589,6 +643,136 @@ if (session) {
           <Button onClick={handleSave} variant="contained" color="primary">
             Guardar
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={openConversationDialog}
+        onClose={handleConversationDialogClose}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle>Conversación del Cliente</DialogTitle>
+        <DialogContent>
+          {conversationLoading ? (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "200px",
+              }}
+            >
+              <CircularProgress />
+            </div>
+          ) : conversationData ? (
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={4}>
+                <Paper elevation={2} className="p-4">
+                  <Typography variant="subtitle1" gutterBottom>
+                    Historial de Conversaciones
+                  </Typography>
+                  <List>
+                    {conversationData.map((conv, index) => (
+                      <ListItem
+                        key={conv.conversacion_id}
+                        button="true"
+                        selected={selectedConversation === index}
+                        onClick={() => setSelectedConversation(index)}
+                      >
+                        <ListItemText
+                          primary={`Conversación ${index + 1}`}
+                          secondary={new Date(
+                            conv.ultima_interaccion
+                          ).toLocaleString()}
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Paper>
+              </Grid>
+              <Grid item xs={12} md={8}>
+                <Paper elevation={2} className="p-4 h-[500px] overflow-y-auto">
+                  {conversationData[selectedConversation]?.interacciones.map(
+                    (message, index) => (
+                      <React.Fragment
+                        key={message._id || `interaccion-${index}`}
+                      >
+                        {/* Mensaje del cliente */}
+                        {message.mensaje_cliente && (
+                          <Box className="mb-4 flex justify-end">
+                            <Box className="p-3 rounded-lg max-w-[70%] bg-green-100 text-green-800">
+                              <Typography variant="body1">
+                                {message.mensaje_cliente}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                className="mt-1 text-gray-500"
+                              >
+                                {message.fecha
+                                  ? new Date(message.fecha).toLocaleString(
+                                      "es-ES",
+                                      {
+                                        weekday: "long",
+                                        year: "numeric",
+                                        month: "long",
+                                        day: "numeric",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      }
+                                    )
+                                  : "Fecha no disponible"}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        )}
+
+                        {/* Mensaje del chatbot */}
+                        {message.mensaje_chatbot &&
+                          message.mensaje_chatbot
+                            .split("|")
+                            .map((botMessage, index) => (
+                              <Box
+                                key={`bot-message-${index}`}
+                                className="mb-4 flex justify-start"
+                              >
+                                <Box className="p-3 rounded-lg max-w-[70%] bg-blue-100 text-blue-800">
+                                  <Typography variant="body1">
+                                    {botMessage.trim()}
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    className="mt-1 text-gray-500"
+                                  >
+                                    {message.fecha
+                                      ? new Date(message.fecha).toLocaleString(
+                                          "es-ES",
+                                          {
+                                            weekday: "long",
+                                            year: "numeric",
+                                            month: "long",
+                                            day: "numeric",
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                          }
+                                        )
+                                      : "Fecha no disponible"}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            ))}
+                      </React.Fragment>
+                    )
+                  )}
+                </Paper>
+              </Grid>
+            </Grid>
+          ) : (
+            <Typography>No hay datos de conversación disponibles.</Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleConversationDialogClose}>Cerrar</Button>
         </DialogActions>
       </Dialog>
     </Container>

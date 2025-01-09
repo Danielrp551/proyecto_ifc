@@ -1,7 +1,7 @@
 "use client";
 
 import { DataGrid } from "@mui/x-data-grid";
-import { use, useState } from "react";
+import React, { useState } from "react";
 import {
   TextField,
   IconButton,
@@ -17,9 +17,16 @@ import {
   Select,
   FormControl,
   InputLabel,
+  CircularProgress,
+  Typography,
+  Box,
+  Grid,
+  Paper,
+  List,
+  ListItem,
+  ListItemText,
 } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { blue, green, orange, red, grey, yellow } from "@mui/material/colors";
 
@@ -86,6 +93,11 @@ export default function ClientesTable({
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
+  const [openConversationDialog, setOpenConversationDialog] = useState(false);
+  const [conversationLoading, setConversationLoading] = useState(false);
+  const [conversationData, setConversationData] = useState(null);
+  const [selectedConversation, setSelectedConversation] = useState(0);
+
   const router = useRouter();
 
   const handleMenuOpen = (params, event) => {
@@ -101,10 +113,12 @@ export default function ClientesTable({
   const handleAction = (action) => {
     if (action === "comercial") {
       setDialogTitle("Acción Comercial (Cliente)");
-    } else if (action === "detalles") {
-      setDialogTitle("Detalles del Cliente");
+      setOpenDialog(true);
+    } else if (action === "conversacion") {
+      setOpenConversationDialog(true);
+      fetchConversation(selectedRow.id);
     }
-    setOpenDialog(true);
+
     handleMenuClose();
   };
 
@@ -112,16 +126,43 @@ export default function ClientesTable({
     setOpenDialog(false);
     setNotes("");
     setError(false);
+    setEditedData(null);
+  };
+
+  const handleConversationDialogClose = () => {
+    setOpenConversationDialog(false);
+    setConversationData(null);
+    setSelectedConversation(0);
+  };
+
+  const fetchConversation = async (clientId) => {
+    setConversationLoading(true);
+    try {
+      const response = await fetch(`/api/dashboard/conversaciones/${clientId}`);
+      if (!response.ok) {
+        throw new Error("Error al cargar la conversación");
+      }
+      const data = await response.json();
+      setConversationData(data.conversaciones);
+      console.log("Conversación cargada:", data);
+    } catch (error) {
+      console.error("Error fetching conversation:", error);
+      setSnackbarMessage("Error al cargar la conversación");
+      setSnackbarSeverity("error");
+      setOpenSnackbar(true);
+    } finally {
+      setConversationLoading(false);
+    }
   };
 
   const saveChanges = async () => {
     try {
       const body = JSON.stringify({
         nombreCompleto: editedData.nombreCompleto,
-        email: editedData.email === ""? null : editedData.email,
+        email: editedData.email === "" ? null : editedData.email,
         observaciones: editedData.observaciones,
         notas: notes,
-        gestor: editedData.gestor=== " - "? "" : editedData.gestor,
+        gestor: editedData.gestor === " - " ? "" : editedData.gestor,
         asesorId: asesor.asesor_id,
         acciones: editedData.acciones,
       });
@@ -272,6 +313,9 @@ export default function ClientesTable({
         <MenuItem onClick={() => handleViewDetails(selectedRow?.id)}>
           Ver Detalles
         </MenuItem>
+        <MenuItem onClick={() => handleAction("conversacion")}>
+          Ver Conversación
+        </MenuItem>
         {/*<MenuItem onClick={() => handleAction('detalles')}>Ver Detalles</MenuItem>*/}
       </Menu>
 
@@ -319,13 +363,14 @@ export default function ClientesTable({
                   label="Gestor"
                   margin="normal"
                   value={editedData.gestor}
-                  onChange={(e) =>
-                    handleInputChange("gestor", e.target.value)
-                  }
+                  onChange={(e) => handleInputChange("gestor", e.target.value)}
                 >
                   <MenuItem value=" - ">Sin gestor asignado</MenuItem>
                   {asesores.map((asesor) => (
-                    <MenuItem key={asesor.asesor_id} value={asesor.nombre + " " + asesor.primer_apellido}>
+                    <MenuItem
+                      key={asesor.asesor_id}
+                      value={asesor.nombre + " " + asesor.primer_apellido}
+                    >
                       {asesor.nombre} {asesor.primer_apellido}
                     </MenuItem>
                   ))}
@@ -386,6 +431,136 @@ export default function ClientesTable({
           <Button onClick={handleSave} variant="contained" color="primary">
             Guardar
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={openConversationDialog}
+        onClose={handleConversationDialogClose}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle>Conversación del Cliente</DialogTitle>
+        <DialogContent>
+          {conversationLoading ? (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "200px",
+              }}
+            >
+              <CircularProgress />
+            </div>
+          ) : conversationData ? (
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={4}>
+                <Paper elevation={2} className="p-4">
+                  <Typography variant="subtitle1" gutterBottom>
+                    Historial de Conversaciones
+                  </Typography>
+                  <List>
+                    {conversationData.map((conv, index) => (
+                      <ListItem
+                        key={conv.conversacion_id}
+                        button="true"
+                        selected={selectedConversation === index}
+                        onClick={() => setSelectedConversation(index)}
+                      >
+                        <ListItemText
+                          primary={`Conversación ${index + 1}`}
+                          secondary={new Date(
+                            conv.ultima_interaccion
+                          ).toLocaleString()}
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Paper>
+              </Grid>
+              <Grid item xs={12} md={8}>
+                <Paper elevation={2} className="p-4 h-[500px] overflow-y-auto">
+                  {conversationData[selectedConversation]?.interacciones.map(
+                    (message, index) => (
+                      <React.Fragment
+                        key={message._id || `interaccion-${index}`}
+                      >
+                        {/* Mensaje del cliente */}
+                        {message.mensaje_cliente && (
+                          <Box className="mb-4 flex justify-end">
+                            <Box className="p-3 rounded-lg max-w-[70%] bg-green-100 text-green-800">
+                              <Typography variant="body1">
+                                {message.mensaje_cliente}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                className="mt-1 text-gray-500"
+                              >
+                                {message.fecha
+                                  ? new Date(message.fecha).toLocaleString(
+                                      "es-ES",
+                                      {
+                                        weekday: "long",
+                                        year: "numeric",
+                                        month: "long",
+                                        day: "numeric",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      }
+                                    )
+                                  : "Fecha no disponible"}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        )}
+
+                        {/* Mensaje del chatbot */}
+                        {message.mensaje_chatbot &&
+                          message.mensaje_chatbot
+                            .split("|")
+                            .map((botMessage, index) => (
+                              <Box
+                                key={`bot-message-${index}`}
+                                className="mb-4 flex justify-start"
+                              >
+                                <Box className="p-3 rounded-lg max-w-[70%] bg-blue-100 text-blue-800">
+                                  <Typography variant="body1">
+                                    {botMessage.trim()}
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    className="mt-1 text-gray-500"
+                                  >
+                                    {message.fecha
+                                      ? new Date(message.fecha).toLocaleString(
+                                          "es-ES",
+                                          {
+                                            weekday: "long",
+                                            year: "numeric",
+                                            month: "long",
+                                            day: "numeric",
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                          }
+                                        )
+                                      : "Fecha no disponible"}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            ))}
+                      </React.Fragment>
+                    )
+                  )}
+                </Paper>
+              </Grid>
+            </Grid>
+          ) : (
+            <Typography>No hay datos de conversación disponibles.</Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleConversationDialogClose}>Cerrar</Button>
         </DialogActions>
       </Dialog>
 
