@@ -128,9 +128,8 @@ export async function GET(request) {
 
     // 1. Arreglo de objetos con fecha y número de conversaciones (clientes) por fecha
     const clientesPorFecha = clientes.reduce((acc, cliente) => {
-      //const fecha = new Date(cliente.fecha_creacion).toLocaleDateString("es-PE");
-      const fecha = new Date(cliente.fecha_creacion);
-      fecha.setHours(0, 0, 0, 0);
+      const fecha = new Date(cliente.fecha_creacion).toLocaleDateString("es-PE");
+      //const fecha = new Date(cliente.fecha_creacion);
       acc[fecha] = (acc[fecha] || 0) + 1;
       return acc;
     }, {});
