@@ -21,10 +21,8 @@ export async function GET(request) {
       return NextResponse.json({ message: "Debe proporcionar fechas válidas" }, { status: 400 });
     }
 
-    //const fechaInicioObj = new Date(fechaInicio);
-    //const fechaFinObj = new Date(fechaFin);
-    const fechaInicioObj = new Date(new Date(fechaInicio).toLocaleString("en-US", { timeZone: "America/Lima" }));
-const fechaFinObj = new Date(new Date(fechaFin).toLocaleString("en-US", { timeZone: "America/Lima" }));
+    const fechaInicioObj = new Date(fechaInicio);
+    const fechaFinObj = new Date(fechaFin);
     
     const estados = ["promesas de pago", "seguimiento", "interesado", "activo", "cita agendada", "no interesado","pendiente de contacto","nuevo","contactado"];
 
@@ -131,8 +129,8 @@ const fechaFinObj = new Date(new Date(fechaFin).toLocaleString("en-US", { timeZo
 
     // 1. Arreglo de objetos con fecha y número de conversaciones (clientes) por fecha
     const clientesPorFecha = clientes.reduce((acc, cliente) => {
-      const fecha = new Date(cliente.fecha_creacion).toLocaleDateString("es-PE");
-      //const fecha = new Date(cliente.fecha_creacion);
+      //const fecha = new Date(cliente.fecha_creacion).toLocaleDateString("es-PE");
+      const fecha = cliente.fecha_creacion.toISOString().split("T")[0];
       acc[fecha] = (acc[fecha] || 0) + 1;
       return acc;
     }, {});
