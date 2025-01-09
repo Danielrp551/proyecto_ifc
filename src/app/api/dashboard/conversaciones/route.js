@@ -21,8 +21,11 @@ export async function GET(request) {
       return NextResponse.json({ message: "Debe proporcionar fechas válidas" }, { status: 400 });
     }
 
-    const fechaInicioObj = new Date(fechaInicio);
-    const fechaFinObj = new Date(fechaFin);
+    //const fechaInicioObj = new Date(fechaInicio);
+    //const fechaFinObj = new Date(fechaFin);
+    const fechaInicioObj = new Date(new Date(fechaInicio).toLocaleString("en-US", { timeZone: "America/Lima" }));
+const fechaFinObj = new Date(new Date(fechaFin).toLocaleString("en-US", { timeZone: "America/Lima" }));
+    
     const estados = ["promesas de pago", "seguimiento", "interesado", "activo", "cita agendada", "no interesado","pendiente de contacto","nuevo","contactado"];
 
     // Filtro por asesor
