@@ -25,11 +25,10 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { endOfDay, startOfDay, differenceInHours  } from "date-fns";
+import { endOfDay, startOfDay, differenceInHours } from "date-fns";
 import { DateFilterv2 } from "./date-filter_v2";
 import { blue, green, orange, red, grey, yellow } from "@mui/material/colors";
-import { stateMapping,getStateInfo } from "@/app/utils/stateMapping";
-
+import { stateMapping, getStateInfo } from "@/app/utils/stateMapping";
 
 export default function ConversationsChart() {
   const [loading, setLoading] = useState(true);
@@ -73,9 +72,13 @@ export default function ConversationsChart() {
         );
         const data = await response.json();
         console.log("data", data);
-        const cantidadHoras = differenceInHours(filtros.dateRange.to, filtros.dateRange.from);
-        const gastos = data.totalInteracciones*0.0192 + cantidadHoras*(0.0464 + 0.017)
-        console.log("Gastos",gastos)
+        const cantidadHoras = differenceInHours(
+          filtros.dateRange.to,
+          filtros.dateRange.from
+        );
+        const gastos =
+          data.totalInteracciones * 0.0192 + cantidadHoras * (0.0464 + 0.017);
+        console.log("Gastos", gastos);
         setData(data.conversacionesPorFecha);
         setResumen({
           conversacionesGestionadas: data.conversacionesGestionadas,
@@ -123,28 +126,26 @@ export default function ConversationsChart() {
         setLoading(false);
       }
     };
-
-    
   }, [filtros]);
 
   useEffect(() => {
     const fetchGestores = async () => {
-        setLoading(true);
-        try {
-          const response = await fetch(`/api/gestores?`);
-          const data = await response.json();
-          console.log("data asesores", data);
-          setGestores(data.asesores);
-        } catch (err) {
-          setError("Error al cargar los datos de los gestores");
-          setSnackbarMessage("Error al cargar gestores");
-          setOpenSnackbar(true);
-        } finally {
-          setLoading(false);
-        }
-      };
-  
-      fetchGestores();   
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/gestores?`);
+        const data = await response.json();
+        console.log("data asesores", data);
+        setGestores(data.asesores);
+      } catch (err) {
+        setError("Error al cargar los datos de los gestores");
+        setSnackbarMessage("Error al cargar gestores");
+        setOpenSnackbar(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGestores();
   }, []);
 
   const handleCloseSnackbar = () => setOpenSnackbar(false);
@@ -201,21 +202,17 @@ export default function ConversationsChart() {
                 Conversaciones por estado:
               </Typography>
               {Object.entries(resumen.conversacionesPorEstado || {})
-                .filter(
-                  ([state]) =>
-                    !["nuevo", "contactado"].includes(state)
-                )
+                .filter(([state]) => !["nuevo", "contactado"].includes(state))
                 .map(([state, count]) => (
                   <Typography
                     key={state}
                     variant="body2"
                     style={{
                       backgroundColor:
-                      getStateInfo(state)?.color ||
-                      getStateInfo(state).color,
+                        getStateInfo(state)?.color || getStateInfo(state).color,
                       color:
-                      getStateInfo(state)?.textColor ||
-                      getStateInfo(state).textColor,
+                        getStateInfo(state)?.textColor ||
+                        getStateInfo(state).textColor,
                       padding: "2px 6px",
                       borderRadius: "4px",
                       marginBottom: "4px",
@@ -226,10 +223,10 @@ export default function ConversationsChart() {
                     {getStateInfo(state)?.text || state}: {count}
                   </Typography>
                 ))}
-                { resumen.conversacionesCitaAgendadaAccion != 0 && (
+              {resumen.conversacionesCitaAgendadaAccion != 0 && (
                 <Typography
-                    variant="body2"
-                    style={{
+                  variant="body2"
+                  style={{
                     backgroundColor: getStateInfo("cita agendada").color,
                     color: getStateInfo("cita agendada").textColor,
                     padding: "2px 6px",
@@ -237,17 +234,20 @@ export default function ConversationsChart() {
                     marginBottom: "4px",
                     display: "inline-block",
                     marginRight: "4px",
-                    }}
+                  }}
                 >
-                    {getStateInfo("cita agendada").text + " Accion"}: {resumen.conversacionesCitaAgendadaAccion}
+                  {getStateInfo("cita agendada").text + " Accion"}:{" "}
+                  {resumen.conversacionesCitaAgendadaAccion}
                 </Typography>
-                )}
+              )}
               <Divider className="my-2" />
               <Typography variant="body2" className="text-gray-600">
-                Total de interacciones: <strong>{resumen.totalInteracciones}</strong>
+                Total de interacciones:{" "}
+                <strong>{resumen.totalInteracciones}</strong>
               </Typography>
               <Typography variant="body2" className="text-gray-600">
-                Gastos aproximados: <strong>${resumen.gastosAprox?.toFixed(2)}</strong>
+                Gastos aproximados:{" "}
+                <strong>${resumen.gastosAprox?.toFixed(2)}</strong>
               </Typography>
             </>
           )}
@@ -286,10 +286,10 @@ export default function ConversationsChart() {
                   {Object.keys(stateMapping)
                     .filter((state) => !["default"].includes(state))
                     .map((state) => (
-                    <MenuItem key={state} value={state}>
-                      {stateMapping[state].text}
-                    </MenuItem>
-                  ))}
+                      <MenuItem key={state} value={state}>
+                        {stateMapping[state].text}
+                      </MenuItem>
+                    ))}
                 </Select>
               </FormControl>
             </Grid>
@@ -302,11 +302,14 @@ export default function ConversationsChart() {
                   label="Gestor"
                 >
                   <MenuItem value="">Todos</MenuItem>
-                    {gestores.map((gestor) => (
-                        <MenuItem key={gestor.asesor_id} value={gestor.nombre + " " + gestor.primer_apellido}>
-                        {gestor.nombre} {gestor.primer_apellido}
-                        </MenuItem>
-                    ))}
+                  {gestores.map((gestor) => (
+                    <MenuItem
+                      key={gestor.asesor_id}
+                      value={gestor.nombre + " " + gestor.primer_apellido}
+                    >
+                      {gestor.nombre} {gestor.primer_apellido}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
@@ -337,13 +340,23 @@ export default function ConversationsChart() {
           ) : error ? (
             <Typography color="error">{error}</Typography>
           ) : (
-            <ResponsiveContainer width="100%" height={300} className={"mt-2"}>
+            <ResponsiveContainer width="100%" height={350} className={"mt-2"}>
               <BarChart data={data}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="fecha" />
+                <XAxis
+                  dataKey="fecha"
+                  angle={-45}
+                  textAnchor="end"
+                  height={70}
+                  tick={{ fontSize: 12 }}
+                />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="num_conversaciones" fill="#00C853" />
+                <Bar
+                  dataKey="num_conversaciones"
+                  name="Número de conversaciones"
+                  fill="#00C853"
+                />
               </BarChart>
             </ResponsiveContainer>
           )}
