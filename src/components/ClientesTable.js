@@ -361,6 +361,7 @@ export default function ClientesTable({
                     Atendió en otro lugar
                   </MenuItem>
                   <MenuItem value="no_interesado">No Interesado</MenuItem>
+                  <MenuItem value="promesa_de_pago">Promesa</MenuItem>
                 </Select>
               </FormControl>
 

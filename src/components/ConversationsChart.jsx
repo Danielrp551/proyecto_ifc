@@ -28,44 +28,8 @@ import {
 import { endOfDay, startOfDay, differenceInHours  } from "date-fns";
 import { DateFilterv2 } from "./date-filter_v2";
 import { blue, green, orange, red, grey, yellow } from "@mui/material/colors";
+import { stateMapping,getStateInfo } from "@/app/utils/stateMapping";
 
-const stateMapping = {
-  "no interesado": {
-    text: "Interesado con Reservas",
-    color: red[100],
-    textColor: red[800],
-  },
-  activo: {
-    text: "Activo",
-    color: green[100],
-    textColor: green[800],
-  },
-  seguimiento: {
-    text: "Seguimiento",
-    color: blue[100],
-    textColor: blue[800],
-  },
-  interesado: {
-    text: "Interesado",
-    color: yellow[100],
-    textColor: yellow[800],
-  },
-  "promesas de pago": {
-    text: "Promesa de pago",
-    color: orange[100],
-    textColor: orange[800],
-  },
-  "cita agendada": {
-    text: "Cita Agendada",
-    color: green[200],
-    textColor: green[800],
-  },
-  default: {
-    text: "Desconocido",
-    color: grey[100],
-    textColor: grey[800],
-  },
-};
 
 export default function ConversationsChart() {
   const [loading, setLoading] = useState(true);
@@ -239,7 +203,7 @@ export default function ConversationsChart() {
               {Object.entries(resumen.conversacionesPorEstado || {})
                 .filter(
                   ([state]) =>
-                    !["nuevo", "contactado", "cita agendada"].includes(state)
+                    !["nuevo", "contactado"].includes(state)
                 )
                 .map(([state, count]) => (
                   <Typography
@@ -247,11 +211,11 @@ export default function ConversationsChart() {
                     variant="body2"
                     style={{
                       backgroundColor:
-                        stateMapping[state]?.color ||
-                        stateMapping.default.color,
+                      getStateInfo(state)?.color ||
+                      getStateInfo(state).color,
                       color:
-                        stateMapping[state]?.textColor ||
-                        stateMapping.default.textColor,
+                      getStateInfo(state)?.textColor ||
+                      getStateInfo(state).textColor,
                       padding: "2px 6px",
                       borderRadius: "4px",
                       marginBottom: "4px",
@@ -259,15 +223,15 @@ export default function ConversationsChart() {
                       marginRight: "4px",
                     }}
                   >
-                    {stateMapping[state]?.text || state}: {count}
+                    {getStateInfo(state)?.text || state}: {count}
                   </Typography>
                 ))}
                 { resumen.conversacionesCitaAgendadaAccion != 0 && (
                 <Typography
                     variant="body2"
                     style={{
-                    backgroundColor: stateMapping["cita agendada"].color,
-                    color: stateMapping["cita agendada"].textColor,
+                    backgroundColor: getStateInfo("cita agendada").color,
+                    color: getStateInfo("cita agendada").textColor,
                     padding: "2px 6px",
                     borderRadius: "4px",
                     marginBottom: "4px",
@@ -275,7 +239,7 @@ export default function ConversationsChart() {
                     marginRight: "4px",
                     }}
                 >
-                    {stateMapping["cita agendada"].text}: {resumen.conversacionesCitaAgendadaAccion}
+                    {getStateInfo("cita agendada").text + " Accion"}: {resumen.conversacionesCitaAgendadaAccion}
                 </Typography>
                 )}
               <Divider className="my-2" />
@@ -363,6 +327,7 @@ export default function ConversationsChart() {
                     Atendió en otro lugar
                   </MenuItem>
                   <MenuItem value="no_interesado">No interesado</MenuItem>
+                  <MenuItem value="promesa_de_pago">Promesa</MenuItem>
                 </Select>
               </FormControl>
             </Grid>

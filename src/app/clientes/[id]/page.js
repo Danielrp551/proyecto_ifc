@@ -33,6 +33,7 @@ import {
   Assignment,
   Chat,
 } from "@mui/icons-material";
+import { getStateInfo } from "@/app/utils/stateMapping";
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -116,8 +117,12 @@ export default function ClientDetails() {
               {client.nombre} {client.apellido}
             </Typography>
             <Chip
-              label={client.estado || "Activo"}
-              color={client.estado === "activo" ? "success" : "default"}
+              label={getStateInfo(client.estado).text}
+              sx={{
+                backgroundColor: getStateInfo(client.estado).color,
+                color: getStateInfo(client.estado).textColor,
+                fontWeight: "medium",
+              }}
               className="mb-4"
             />
             <Typography variant="body1" className="flex items-center mb-2">

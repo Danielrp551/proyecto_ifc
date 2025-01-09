@@ -351,6 +351,7 @@ if (session) {
                     Atendió en otro lugar
                   </MenuItem>
                   <MenuItem value="no_interesado">No interesado</MenuItem>
+                  <MenuItem value="promesa_de_pago">Promesa</MenuItem>
                 </Select>
               </FormControl>
 
@@ -577,6 +578,7 @@ if (session) {
                     Atendió en otro lugar
                   </MenuItem>
                   <MenuItem value="no_interesado">No Interesado</MenuItem>
+                  <MenuItem value="promesa_de_pago">Promesa</MenuItem>
                 </Select>
               </FormControl>
             </>

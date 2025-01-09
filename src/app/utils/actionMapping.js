@@ -21,6 +21,11 @@ export const actionMapping = {
     color: red[100],
     textColor: red[800]
   },
+  promesa_de_pago: {
+    text: "Promesa de Pago",
+    color: orange[100],
+    textColor: orange[800],
+  },
   default: {
     text: "Sin Acción",
     color: grey[100],
