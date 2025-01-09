@@ -188,7 +188,7 @@ export default function DashboardPage() {
               sx={{backgroundColor: "#ffffff",}}
             >
               <SelectItem value="vacio">Todos</SelectItem>
-              <SelectItem value="no interesado">No interesado</SelectItem>
+              <SelectItem value="no interesado">Interesado con Reservas</SelectItem>
               <SelectItem value="activo">Activo</SelectItem>
               <SelectItem value="seguimiento">Seguimiento</SelectItem>
               <SelectItem value="interesado">Interesado</SelectItem>

@@ -31,6 +31,7 @@ import { useRouter } from "next/navigation";
 import { DateFilter } from "@/components/date-filter";
 import SearchIcon from "@mui/icons-material/Search";
 import { DateFilterv2 } from "@/components/date-filter_v2";
+import { getStateInfo } from "@/app/utils/stateMapping";
 
 export default function ClientsManagement() {
   const [clients, setClients] = useState([]);
@@ -204,7 +205,7 @@ export default function ClientsManagement() {
                   sx={{ backgroundColor: "#ffffff" }}
                 >
                   <SelectItem value="vacio">Todos</SelectItem>
-                  <SelectItem value="no interesado">No interesado</SelectItem>
+                  <SelectItem value="no interesado">Interesado con Reservas</SelectItem>
                   <SelectItem value="activo">Activo</SelectItem>
                   <SelectItem value="seguimiento">Seguimiento</SelectItem>
                   <SelectItem value="interesado">Interesado</SelectItem>
@@ -303,7 +304,7 @@ export default function ClientsManagement() {
                   >
                     <TableCell>{client.nombre}</TableCell>
                     <TableCell>{client.celular}</TableCell>
-                    <TableCell>{client.estado}</TableCell>
+                    <TableCell>{getStateInfo(client.estado).text}</TableCell>
                     <TableCell>
                       {client.bound === true ? "IN" : "OUT"}
                     </TableCell>

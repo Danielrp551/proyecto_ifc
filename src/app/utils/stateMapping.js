@@ -2,7 +2,7 @@ import { blue, green, orange, red, grey, yellow } from '@mui/material/colors';
 
 export const stateMapping = {
   "no interesado": {
-    text: "No interesado",
+    text: "Interesado con Reservas",
     color: red[100],
     textColor: red[800]
   },

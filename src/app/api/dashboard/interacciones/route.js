@@ -58,6 +58,7 @@ export async function GET(request) {
 
     // Respuesta
     return NextResponse.json({
+    clientes,   
       totalInteracciones,
     });
   } catch (error) {

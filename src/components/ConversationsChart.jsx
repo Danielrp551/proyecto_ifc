@@ -25,13 +25,13 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { endOfDay, startOfDay, set } from "date-fns";
+import { endOfDay, startOfDay, differenceInHours  } from "date-fns";
 import { DateFilterv2 } from "./date-filter_v2";
 import { blue, green, orange, red, grey, yellow } from "@mui/material/colors";
 
 const stateMapping = {
   "no interesado": {
-    text: "No interesado",
+    text: "Interesado con Reservas",
     color: red[100],
     textColor: red[800],
   },
@@ -109,11 +109,16 @@ export default function ConversationsChart() {
         );
         const data = await response.json();
         console.log("data", data);
+        const cantidadHoras = differenceInHours(filtros.dateRange.to, filtros.dateRange.from);
+        const gastos = data.totalInteracciones*0.0192 + cantidadHoras*(0.0464 + 0.017)
+        console.log("Gastos",gastos)
         setData(data.conversacionesPorFecha);
         setResumen({
           conversacionesGestionadas: data.conversacionesGestionadas,
           conversacionesPorEstado: data.conversacionesPorEstado,
           conversacionesCitaAgendadaAccion: data.numCitaAgendada,
+          totalInteracciones: data.totalInteracciones,
+          gastosAprox: gastos,
         });
         setTotalConversaciones(data.totalConversaciones);
       } catch (err) {
@@ -155,8 +160,8 @@ export default function ConversationsChart() {
       }
     };
 
-    fetchInteracciones();
-  }, []);
+    
+  }, [filtros]);
 
   useEffect(() => {
     const fetchGestores = async () => {
@@ -273,6 +278,13 @@ export default function ConversationsChart() {
                     {stateMapping["cita agendada"].text}: {resumen.conversacionesCitaAgendadaAccion}
                 </Typography>
                 )}
+              <Divider className="my-2" />
+              <Typography variant="body2" className="text-gray-600">
+                Total de interacciones: <strong>{resumen.totalInteracciones}</strong>
+              </Typography>
+              <Typography variant="body2" className="text-gray-600">
+                Gastos aproximados: <strong>${resumen.gastosAprox?.toFixed(2)}</strong>
+              </Typography>
             </>
           )}
         </CardContent>

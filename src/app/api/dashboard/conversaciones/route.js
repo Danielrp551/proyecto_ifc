@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
+import { MongoClient } from "mongodb";
+
+const uri = process.env.MONGODB_URI;
+const clientPromise = new MongoClient(uri).connect();
 
 export async function GET(request) {
   try {
@@ -19,6 +23,7 @@ export async function GET(request) {
 
     const fechaInicioObj = new Date(fechaInicio);
     const fechaFinObj = new Date(fechaFin);
+    const estados = ["promesas de pago", "seguimiento", "interesado", "activo", "cita agendada", "no interesado","pendiente de contacto","nuevo","contactado"];
 
     // Filtro por asesor
     const asesorFilter = asesor
@@ -36,7 +41,11 @@ export async function GET(request) {
             equals: estado.trim(),
           },
         }
-      : {};
+      : {
+            estado: {
+                in: estados,
+            },
+      };
 
     // Filtro por acción
     const accionFilter = accion
@@ -72,12 +81,50 @@ export async function GET(request) {
       },
       select: {
         cliente_id: true,
+        celular: true,
         fecha_creacion: true,
         estado: true,
         gestor: true,
         acciones: true,
       },
     });
+
+    const celulares = clientes.map((cliente) => cliente.celular);
+
+    // Conectar a MongoDB
+    const mongoClient = await clientPromise;
+    const db = mongoClient.db(process.env.MONGODB_DB);
+
+    // Consultar interacciones desde la colección "clientes"
+    const interacciones = await db.collection("clientes").aggregate([
+      {
+        $match: {
+          "celular": { $in: celulares },
+        },
+      },
+      {
+        $unwind: "$conversaciones",
+      },
+      {
+        $unwind: "$conversaciones.interacciones",
+      },
+      {
+        $match: {
+          "conversaciones.interacciones.fecha": {
+            $gte: fechaInicioObj,
+            $lte: fechaFinObj,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalInteracciones: { $sum: 1 },
+        },
+      },
+    ]).toArray();
+
+    const totalInteracciones = interacciones.length > 0 ? interacciones[0].totalInteracciones : 0;
 
     // 1. Arreglo de objetos con fecha y número de conversaciones (clientes) por fecha
     const clientesPorFecha = clientes.reduce((acc, cliente) => {
@@ -117,6 +164,8 @@ export async function GET(request) {
       conversacionesGestionadas,
       conversacionesPorEstado,
       numCitaAgendada,
+      totalInteracciones,
+      clientes,
     });
   } catch (error) {
     console.error("Error al obtener los clientes:", error);
