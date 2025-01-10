@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Container,
   Typography,
@@ -23,19 +23,32 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem as SelectItem,
+  MenuItem,
   FormControlLabel,
+  IconButton,
+  Menu,
+  Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Grid,
+    List,
+    ListItem,
+    ListItemText,
 } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import { useRouter } from "next/navigation";
 import { DateFilter } from "@/components/date-filter";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import SearchIcon from "@mui/icons-material/Search";
 import { DateFilterv2 } from "@/components/date-filter_v2";
 import { getStateInfo } from "@/app/utils/stateMapping";
 import { endOfDay, startOfDay, differenceInHours } from "date-fns";
+import { useSession } from "next-auth/react";
 
 export default function ClientsManagement() {
   const [clients, setClients] = useState([]);
+   const [gestores, setGestores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -58,7 +71,27 @@ export default function ClientsManagement() {
   const [endDate, setEndDate] = useState(new Date());
   const [selectedPreset, setSelectedPreset] = useState("Hoy");
 
+  const [editedData, setEditedData] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState("");
+  const [notes, setNotes] = useState("");
+  const [selectedClient, setSelectedClient] = useState(null);
+
+  const [openConversationDialog, setOpenConversationDialog] = useState(false);
+  const [conversationLoading, setConversationLoading] = useState(false);
+  const [conversationData, setConversationData] = useState(null);
+  const [selectedConversation, setSelectedConversation] = useState(0);
+
   const router = useRouter();
+
+  const { data: session, status } = useSession();
+  //console.log("Session: ",session);
+  if (session) {
+    const asesor = session.user?.asesor;
+    console.log("Asesor: ", asesor);
+  }
+
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -81,8 +114,8 @@ export default function ClientsManagement() {
             ? `&fechaInicio=${filtros.dateRange.from.toISOString()}&fechaFin=${filtros.dateRange.to.toISOString()}`
             : "";
         const nuevasConversaciones = filtros.nuevasConversaciones
-        ? "&nuevasConversaciones=true"
-        : "";
+          ? "&nuevasConversaciones=true"
+          : "";
         const response = await fetch(
           `api/clients?page=${
             page + 1
@@ -113,6 +146,27 @@ export default function ClientsManagement() {
     filtros.nuevasConversaciones,
   ]);
 
+  useEffect(() => {
+    const fetchGestores = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/gestores?`);
+        const data = await response.json();
+        console.log("data", data);
+        setGestores(data.asesores);
+      } catch (err) {
+        setError("Error al cargar los datos de los gestores");
+        setSnackbarMessage("Error al cargar gestores");
+        setOpenSnackbar(true);
+        console.error("Error al cargar los gestores:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGestores();
+  }, []);
+
   const handleChangePage = (_, newPage) => setPage(newPage);
   const handleChangePageSize = (event) => {
     setPageSize(parseInt(event.target.value, 10));
@@ -141,6 +195,135 @@ export default function ClientsManagement() {
     setFiltros((prev) => ({
       ...prev,
       dateRange: dateRange,
+    }));
+  };
+
+  const handleMenuOpen = (event, client) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedClient(client);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedClient(null);
+  };
+
+  const handleAccionComercial = () => {
+    setDialogTitle("Acción Comercial");
+    setEditedData({
+      ...selectedClient,
+      nombreCompleto: selectedClient.nombre + " " + selectedClient.apellido,
+    });
+    setOpenDialog(true);
+    handleMenuClose();
+    console.log("Acción Comercial de:", selectedClient);
+  };
+
+  const handleVerDetalles = () => {
+    console.log("Ver Detalles de:", selectedClient);
+    // Aquí iría la lógica para navegar a la página de detalles del cliente
+    if (selectedClient) {
+      router.push(`/clientes/${selectedClient.cliente_id}`);
+    }
+    handleMenuClose();
+  };
+
+  const handleAction = (action) => {
+    if (action === "comercial") {
+      setDialogTitle("Acción Comercial (Cliente)");
+      setOpenDialog(true);
+    } else if (action === "conversacion") {
+      setOpenConversationDialog(true);
+      fetchConversation(selectedClient.cliente_id);
+    }
+
+    handleMenuClose();
+  };
+
+  const handleDialogClose = () => {
+    setOpenDialog(false);
+    //setNotes("");
+    setError(false);
+    setEditedData(null);
+  };
+
+  const saveChanges = async () => {
+    try {
+      const body = JSON.stringify({
+        nombreCompleto: editedData.nombreCompleto,
+        email: editedData.email === "" ? null : editedData.email,
+        observaciones: editedData.observaciones,
+        notas: notes,
+        gestor: editedData.gestor === " - " ? "" : editedData.gestor,
+        asesorId: session.user?.asesor.asesor_id,
+        acciones: editedData.acciones,
+      });
+      console.log("Body guardar:", body);
+      const response = await fetch(`/api/clients/${editedData.cliente_id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: body,
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al guardar los cambios.");
+      }
+
+      const data = await response.json();
+      console.log("Cambios guardados:", data);
+
+      setRefresh((prev) => !prev);
+      // Cerrar el diálogo después de guardar
+      handleDialogClose();
+      setSnackbarMessage("Acción comercial guardada exitosamente");
+      setSnackbarSeverity("success");
+      setOpenSnackbar(true);
+    } catch (error) {
+      console.error("Error al guardar cambios:", error.message);
+      setSnackbarMessage("Error al crear la acción comercial");
+      setSnackbarSeverity("error");
+      setOpenSnackbar(true);
+    }
+  };
+
+  const handleSave = () => {
+    console.log("Datos guardados:", editedData);
+    console.log("Notas:", notes);
+    saveChanges();
+  };
+
+  const handleConversationDialogClose = () => {
+    setOpenConversationDialog(false);
+    setConversationData(null);
+    setSelectedConversation(0);
+  };
+
+  const fetchConversation = async (clientId) => {
+    setConversationLoading(true);
+    try {
+      const response = await fetch(`/api/dashboard/conversaciones/${clientId}`);
+      if (!response.ok) {
+        throw new Error("Error al cargar la conversación");
+      }
+      const data = await response.json();
+      setConversationData(data.conversaciones);
+      console.log("Conversación cargada:", data);
+    } catch (error) {
+      console.error("Error fetching conversation:", error);
+      setSnackbarMessage("Error al cargar la conversación");
+      setSnackbarSeverity("error");
+      setOpenSnackbar(true);
+    } finally {
+      setConversationLoading(false);
+    }
+  };
+
+  const handleInputChangeModal = (field, value) => {
+    setEditedData((prev) => ({
+      ...prev,
+      [field]: value,
     }));
   };
 
@@ -205,15 +388,15 @@ export default function ClientsManagement() {
                   }
                   sx={{ backgroundColor: "#ffffff" }}
                 >
-                  <SelectItem value="vacio">Todos</SelectItem>
-                  <SelectItem value="no interesado">Interesado con Reservas</SelectItem>
-                  <SelectItem value="activo">Activo</SelectItem>
-                  <SelectItem value="seguimiento">Seguimiento</SelectItem>
-                  <SelectItem value="interesado">Interesado</SelectItem>
-                  <SelectItem value="promesas de pago">
-                    Promesa de pago
-                  </SelectItem>
-                  <SelectItem value="cita agendada">Cita Agendada</SelectItem>
+                  <MenuItem value="vacio">Todos</MenuItem>
+                  <MenuItem value="no interesado">
+                    Interesado con Reservas
+                  </MenuItem>
+                  <MenuItem value="activo">Activo</MenuItem>
+                  <MenuItem value="seguimiento">Seguimiento</MenuItem>
+                  <MenuItem value="interesado">Interesado</MenuItem>
+                  <MenuItem value="promesas de pago">Promesa de pago</MenuItem>
+                  <MenuItem value="cita agendada">Cita Agendada</MenuItem>
                 </Select>
               </FormControl>
               <FormControl
@@ -229,9 +412,9 @@ export default function ClientsManagement() {
                   onChange={(e) => handleInputChange("bound", e.target.value)}
                   sx={{ backgroundColor: "#ffffff" }}
                 >
-                  <SelectItem value="vacio">Todos</SelectItem>
-                  <SelectItem value="true">Inbound</SelectItem>
-                  <SelectItem value="false">Outbound</SelectItem>
+                  <MenuItem value="vacio">Todos</MenuItem>
+                  <MenuItem value="true">Inbound</MenuItem>
+                  <MenuItem value="false">Outbound</MenuItem>
                 </Select>
               </FormControl>
               {/*
@@ -271,13 +454,16 @@ export default function ClientsManagement() {
                     estado_cliente: "vacio",
                     bound: "vacio",
                     search: "",
-                    dateRange: { from: startOfDay(new Date()), to: endOfDay(new Date()) },
+                    dateRange: {
+                      from: startOfDay(new Date()),
+                      to: endOfDay(new Date()),
+                    },
                   });
 
                   //setResetFilters((prev) => !prev);
                   setSelectedPreset("Hoy");
-                  setStartDate(null);
-                  setEndDate(null);
+                  setStartDate(startOfDay(new Date()));
+                  setEndDate(endOfDay(new Date()));
                 }}
               >
                 Limpiar
@@ -312,8 +498,11 @@ export default function ClientsManagement() {
                     <TableCell>
                       {client.bound === true ? "IN" : "OUT"}
                     </TableCell>
-                    <TableCell>{client.gestor !== ""? client.gestor : " - "}</TableCell>
                     <TableCell>
+                      {client.gestor !== "" ? client.gestor : " - "}
+                    </TableCell>
+                    <TableCell>
+                      {/*
                       <Button
                         onClick={() => handleViewDetails(client.cliente_id)}
                         startIcon={<InfoIcon />}
@@ -322,6 +511,13 @@ export default function ClientsManagement() {
                       >
                         Detalles
                       </Button>
+                      */}
+                      <IconButton
+                        size="small"
+                        onClick={(e) => handleMenuOpen(e, client)}
+                      >
+                        <MoreVertIcon fontSize="small" />
+                      </IconButton>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -339,8 +535,261 @@ export default function ClientsManagement() {
             rowsPerPageOptions={[5, 10, 20]}
             onRowsPerPageChange={handleChangePageSize}
           />
+
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleMenuClose}
+          >
+            <MenuItem onClick={handleAccionComercial}>
+              Acción Comercial
+            </MenuItem>
+            <MenuItem onClick={handleVerDetalles}>Ver Detalles</MenuItem>
+            <MenuItem onClick={() => handleAction("conversacion")}>
+              Ver Conversación
+            </MenuItem>
+          </Menu>
         </>
       )}
+      <Dialog
+        open={openDialog}
+        onClose={handleDialogClose}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>{dialogTitle}</DialogTitle>
+        <DialogContent>
+          {editedData && (
+            <>
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Nombre"
+                value={editedData.nombreCompleto}
+                onChange={(e) =>
+                  handleInputChangeModal("nombreCompleto", e.target.value)
+                }
+              />
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Email"
+                value={editedData.email || ""}
+                onChange={(e) =>
+                  handleInputChangeModal("email", e.target.value)
+                }
+              />
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Teléfono"
+                value={editedData.celular}
+                InputProps={{ readOnly: true }}
+              />
+              <FormControl fullWidth variant="outlined" size="medium">
+                <InputLabel htmlFor="gestor">Gestor</InputLabel>
+                <Select
+                  fullWidth
+                  label="Gestor"
+                  margin="normal"
+                  value={editedData.gestor === "" ? " - " : editedData.gestor}
+                  onChange={(e) =>
+                    handleInputChangeModal("gestor", e.target.value)
+                  }
+                >
+                  <MenuItem value=" - ">Sin gestor asignado</MenuItem>
+                  {gestores.map((gestor) => (
+                    <MenuItem
+                      key={gestor.asesor_id}
+                      value={gestor.nombre + " " + gestor.primer_apellido}
+                    >
+                      {gestor.nombre} {gestor.primer_apellido}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Observaciones"
+                value={editedData.observaciones || ""}
+                multiline
+                rows={4}
+                onChange={(e) =>
+                  handleInputChangeModal("observaciones", e.target.value)
+                }
+              />
+              <FormControl fullWidth variant="outlined" size="medium">
+                <InputLabel htmlFor="acciones">Acciones</InputLabel>
+                <Select
+                  fullWidth
+                  label="Acciones"
+                  margin="normal"
+                  value={editedData.acciones}
+                  onChange={(e) =>
+                    handleInputChangeModal("acciones", e.target.value)
+                  }
+                >
+                  <MenuItem value="cita_agendada">Cita Agendada</MenuItem>
+                  <MenuItem value="volver_contactar">
+                    Volver a contactar
+                  </MenuItem>
+                  <MenuItem value="atendio_otro_lugar">
+                    Atendió en otro lugar
+                  </MenuItem>
+                  <MenuItem value="no_interesado">No Interesado</MenuItem>
+                  <MenuItem value="promesa_de_pago">Promesa</MenuItem>
+                </Select>
+              </FormControl>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose}>Cerrar</Button>
+          <Button onClick={handleSave} variant="contained" color="primary">
+            Guardar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={openConversationDialog}
+        onClose={handleConversationDialogClose}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle>Conversación del Cliente</DialogTitle>
+        <DialogContent>
+          {conversationLoading ? (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "200px",
+              }}
+            >
+              <CircularProgress />
+            </div>
+          ) : conversationData ? (
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={4}>
+                <Paper elevation={2} className="p-4">
+                  <Typography variant="subtitle1" gutterBottom>
+                    Historial de Conversaciones
+                  </Typography>
+                  <List>
+                    {conversationData.map((conv, index) => (
+                      <ListItem
+                        key={conv.conversacion_id}
+                        button="true"
+                        selected={selectedConversation === index}
+                        onClick={() => setSelectedConversation(index)}
+                      >
+                        <ListItemText
+                          primary={`Conversación ${index + 1}`}
+                          secondary={new Date(
+                            conv.ultima_interaccion
+                          ).toLocaleString()}
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Paper>
+              </Grid>
+              <Grid item xs={12} md={8}>
+                <Paper elevation={2} className="p-4 h-[500px] overflow-y-auto">
+                  {conversationData[selectedConversation]?.interacciones.map(
+                    (message, index) => (
+                      <React.Fragment
+                        key={message._id || `interaccion-${index}`}
+                      >
+                        {/* Mensaje del cliente */}
+                        {message.mensaje_cliente && (
+                          <Box className="mb-4 flex justify-end">
+                            <Box className="p-3 rounded-lg max-w-[70%] bg-green-100 text-green-800">
+                              <Typography variant="body1">
+                                {message.mensaje_cliente}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                className="mt-1 text-gray-500"
+                              >
+                                {message.fecha
+                                  ? new Date(message.fecha).toLocaleString(
+                                      "es-ES",
+                                      {
+                                        weekday: "long",
+                                        year: "numeric",
+                                        month: "long",
+                                        day: "numeric",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      }
+                                    )
+                                  : "Fecha no disponible"}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        )}
+
+                        {/* Mensaje del chatbot */}
+                        {message.mensaje_chatbot &&
+                          message.mensaje_chatbot
+                            .split("|")
+                            .map((botMessage, index) => (
+                              <Box
+                                key={`bot-message-${index}`}
+                                className="mb-4 flex justify-start"
+                              >
+                                <Box className="p-3 rounded-lg max-w-[70%] bg-blue-100 text-blue-800">
+                                  <Typography variant="body1">
+                                    {botMessage.trim()}
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    className="mt-1 text-gray-500"
+                                  >
+                                    {message.fecha
+                                      ? new Date(message.fecha).toLocaleString(
+                                          "es-ES",
+                                          {
+                                            weekday: "long",
+                                            year: "numeric",
+                                            month: "long",
+                                            day: "numeric",
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                          }
+                                        )
+                                      : "Fecha no disponible"}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            ))}
+                      </React.Fragment>
+                    )
+                  )}
+                </Paper>
+              </Grid>
+            </Grid>
+          ) : (
+            <Typography>No hay datos de conversación disponibles.</Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleConversationDialogClose}>Cerrar</Button>
+        </DialogActions>
+      </Dialog>
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={4000}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 }
