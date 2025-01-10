@@ -32,6 +32,7 @@ import { DateFilter } from "@/components/date-filter";
 import SearchIcon from "@mui/icons-material/Search";
 import { DateFilterv2 } from "@/components/date-filter_v2";
 import { getStateInfo } from "@/app/utils/stateMapping";
+import { endOfDay, startOfDay, differenceInHours } from "date-fns";
 
 export default function ClientsManagement() {
   const [clients, setClients] = useState([]);
@@ -47,7 +48,7 @@ export default function ClientsManagement() {
     estado_cliente: "vacio",
     bound: "vacio",
     search: "",
-    dateRange: { from: null, to: null },
+    dateRange: { from: startOfDay(new Date()), to: endOfDay(new Date()) },
     nuevasConversaciones: false,
   }); // Filtros de búsqueda
   const [resetFilters, setResetFilters] = useState(false);
@@ -55,7 +56,7 @@ export default function ClientsManagement() {
 
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
-  const [selectedPreset, setSelectedPreset] = useState("Todo");
+  const [selectedPreset, setSelectedPreset] = useState("Hoy");
 
   const router = useRouter();
 
@@ -85,7 +86,7 @@ export default function ClientsManagement() {
         const response = await fetch(
           `api/clients?page=${
             page + 1
-          }&pageSize=${pageSize}${estado}${bound}${search}${dateRange}${nuevasConversaciones}`
+          }&pageSize=${pageSize}${estado}${bound}${search}${dateRange}${"&nuevasConversaciones=true"}`
         );
         const data = await response.json();
         console.log("data : ", data);
@@ -233,6 +234,7 @@ export default function ClientsManagement() {
                   <SelectItem value="false">Outbound</SelectItem>
                 </Select>
               </FormControl>
+              {/*
               <FormControlLabel
                 control={
                   <Checkbox
@@ -245,6 +247,7 @@ export default function ClientsManagement() {
                 }
                 label="Nuevas Conversaciones"
               />
+                */}
             </Box>
             <Typography variant="h6">
               Filtros de fecha de última interacción
@@ -259,6 +262,7 @@ export default function ClientsManagement() {
                 startDate={startDate}
                 endDate={endDate}
                 selectedPreset={selectedPreset}
+                TodoExist={false}
               />
               <Button
                 variant="contained"
@@ -267,11 +271,11 @@ export default function ClientsManagement() {
                     estado_cliente: "vacio",
                     bound: "vacio",
                     search: "",
-                    dateRange: { from: null, to: null },
+                    dateRange: { from: startOfDay(new Date()), to: endOfDay(new Date()) },
                   });
 
                   //setResetFilters((prev) => !prev);
-                  setSelectedPreset("Todo");
+                  setSelectedPreset("Hoy");
                   setStartDate(null);
                   setEndDate(null);
                 }}
