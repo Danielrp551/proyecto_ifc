@@ -213,6 +213,7 @@ export default function DashboardPage() {
           <DateFilter onDateChange={handleDateChange} reset={resetFilters} />
         </Box>
         <Box className="flex flex-wrap gap-2 mt-2 mb-2 mx-0 p-0">
+          {/*
           <FormControlLabel
               control={
                 <Checkbox
@@ -236,6 +237,7 @@ export default function DashboardPage() {
                 },
               }}
             />
+            */}
         </Box>  
         <Box className="flex flex-wrap gap-2 mx-0 p-0">
           <Button variant="contained" onClick={() => {
