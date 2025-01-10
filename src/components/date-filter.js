@@ -51,17 +51,17 @@ const presets = [
 ]
 
 export function DateFilter({ onDateChange, reset }) {
-  const [startDate, setStartDate] = useState(new Date())
-  const [endDate, setEndDate] = useState(new Date())
-  const [selectedPreset, setSelectedPreset] = useState("Todo")
+  const [startDate, setStartDate] = useState(startOfDay(new Date()))
+  const [endDate, setEndDate] = useState(endOfDay(new Date()))
+  const [selectedPreset, setSelectedPreset] = useState("Hoy")
   const [anchorEl, setAnchorEl] = useState(null)
 
   useEffect(() => {
     if (reset) {
-      setSelectedPreset("Todo");
-      setStartDate(null);
-      setEndDate(null);
-      onDateChange({ from: null, to: null });
+      setSelectedPreset("Hoy");
+      setStartDate(startOfDay(new Date()));
+      setEndDate(endOfDay(new Date()));
+      onDateChange({ from: startOfDay(new Date()), to: endOfDay(new Date()) });
     }
   }, [reset]);
 
@@ -105,7 +105,9 @@ export function DateFilter({ onDateChange, reset }) {
         onChange={handlePresetChange}
         sx={{ minWidth: 180, backgroundColor: "#ffffff" }}
       >
-        {presets.map((preset) => (
+        {presets
+        .filter(preset => preset.label !== "Todo")
+        .map((preset) => (
           <MenuItem key={preset.label} value={preset.label}>
             {preset.label}
           </MenuItem>

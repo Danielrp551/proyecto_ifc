@@ -56,7 +56,7 @@ export default function ClientDetails() {
   const [client, setClient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [tabValue, setTabValue] = useState(0);
+  const [tabValue, setTabValue] = useState(1);
   const [selectedConversation, setSelectedConversation] = useState(0);
 
   useEffect(() => {
@@ -145,10 +145,10 @@ export default function ClientDetails() {
               variant="scrollable"
             >
               <Tab label="Información General" />
+              <Tab label="Conversaciones" />
               <Tab label="Citas" />
               <Tab label="Pagos" />
               <Tab label="Acciones Comerciales" />
-              <Tab label="Conversaciones" />
             </Tabs>
             <TabPanel value={tabValue} index={0}>
               <List>
@@ -240,7 +240,7 @@ export default function ClientDetails() {
                       {client.citas.map((cita) => (
                         <TableRow key={cita.cita_id}>
                           <TableCell>
-                            {new Date(cita.fecha_cita).toLocaleString()}
+                            {new Date(new Date(cita.fecha_cita).setHours(new Date(cita.fecha_cita).getHours() + 5)).toLocaleString()}
                           </TableCell>
                           <TableCell>{cita.motivo}</TableCell>
                           <TableCell>{cita.estado_cita}</TableCell>

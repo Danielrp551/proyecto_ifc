@@ -43,6 +43,7 @@ import { getStateInfo } from "@/app/utils/stateMapping";
 import { DateFilterv2 } from "@/components/date-filter_v2";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { startOfDay,endOfDay } from "date-fns";
 
 const GestoresPage = () => {
   const [gestores, setGestores] = useState([]);
@@ -59,13 +60,13 @@ const GestoresPage = () => {
     asesor: "",
     acciones: "",
     search: "",
-    dateRange: { from: null, to: null },
+    dateRange: { from: startOfDay(new Date()), to: endOfDay(new Date()) },
   });
   const [tempSearch, setTempSearch] = useState("");
 
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date());
-  const [selectedPreset, setSelectedPreset] = useState("Todo");
+  const [startDate, setStartDate] = useState(startOfDay(new Date()));
+  const [endDate, setEndDate] = useState(endOfDay(new Date()));
+  const [selectedPreset, setSelectedPreset] = useState("Hoy");
 
   const [resetFilters, setResetFilters] = useState(false);
 
@@ -411,6 +412,7 @@ const GestoresPage = () => {
                 startDate={startDate}
                 endDate={endDate}
                 selectedPreset={selectedPreset}
+                TodoExist={false}
               />
 
               <Button
@@ -420,13 +422,13 @@ const GestoresPage = () => {
                     asesor: "",
                     acciones: "",
                     search: "",
-                    dateRange: { from: null, to: null },
+                    dateRange: { from: startOfDay(new Date()), to: endOfDay(new Date()) },
                   });
                   setTempSearch("");
 
-                  setSelectedPreset("Todo");
-                  setStartDate(null);
-                  setEndDate(null);
+                  setSelectedPreset("Hoy");
+                  setStartDate(startOfDay(new Date()));
+                  setEndDate(endOfDay(new Date()));
                 }}
               >
                 Limpiar

@@ -10,6 +10,7 @@ import { FormControl, Box, InputLabel, Select, MenuItem as SelectItem, TextField
 import SearchIcon from "@mui/icons-material/Search";
 import { DateFilter } from "@/components/date-filter";
 import { CheckBox } from "@mui/icons-material";
+import { startOfDay,endOfDay } from "date-fns";
 
 export default function DashboardPage() {
   const [clientes, setClientes] = useState([]);
@@ -25,7 +26,7 @@ export default function DashboardPage() {
   const [pageSize, setPageSize] = useState(5);
 
   // filtros
-  const [filtros, setFiltros] = useState({ estado_cliente: "vacio", bound: "vacio",search: "",dateRange: { from: null, to: null }, reservaCancelada: false });
+  const [filtros, setFiltros] = useState({ estado_cliente: "vacio", bound: "vacio",search: "",dateRange: { from: startOfDay(new Date()), to: endOfDay(new Date()) }, reservaCancelada: false });
   const [resetFilters, setResetFilters] = useState(false);
 
   const { data: session, status } = useSession();
@@ -245,7 +246,7 @@ export default function DashboardPage() {
                 { estado_cliente: "vacio", 
                   bound: "vacio",
                   search: "",
-                  dateRange: { from: null, to: null },
+                  dateRange: { from: startOfDay(new Date()), to: endOfDay(new Date()) },
                   reservaCancelada: false 
                 }
           )
