@@ -218,7 +218,7 @@ export default function ClientDetails() {
                 </ListItem>
               </List>
             </TabPanel>
-            <TabPanel value={tabValue} index={1}>
+            <TabPanel value={tabValue} index={2}>
               <Typography
                 variant="h6"
                 gutterBottom
@@ -253,7 +253,7 @@ export default function ClientDetails() {
                 <Typography>No hay citas registradas</Typography>
               )}
             </TabPanel>
-            <TabPanel value={tabValue} index={2}>
+            <TabPanel value={tabValue} index={3}>
               <Typography
                 variant="h6"
                 gutterBottom
@@ -278,7 +278,7 @@ export default function ClientDetails() {
                           <TableCell>
                             {new Date(pago.fecha_pago).toLocaleDateString()}
                           </TableCell>
-                          <TableCell>${pago.monto}</TableCell>
+                          <TableCell>S/. {pago.monto}</TableCell>
                           <TableCell>{pago.metodo_pago}</TableCell>
                           <TableCell>{pago.estado_pago}</TableCell>
                         </TableRow>
@@ -290,7 +290,7 @@ export default function ClientDetails() {
                 <Typography>No hay pagos registrados</Typography>
               )}
             </TabPanel>
-            <TabPanel value={tabValue} index={3}>
+            <TabPanel value={tabValue} index={4}>
               <Typography
                 variant="h6"
                 gutterBottom
@@ -317,7 +317,7 @@ export default function ClientDetails() {
                 <Typography>No hay acciones comerciales registradas</Typography>
               )}
             </TabPanel>
-            <TabPanel value={tabValue} index={4}>
+            <TabPanel value={tabValue} index={1}>
               <Typography
                 variant="h6"
                 gutterBottom
