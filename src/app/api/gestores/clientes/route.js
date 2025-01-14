@@ -9,6 +9,7 @@ export async function GET(request) {
       fechaFin = "",
       accion = "",
       search = "",
+      estado = "",
       page = "1",
       pageSize = "10",
     } = Object.fromEntries(new URL(request.url).searchParams);
@@ -21,6 +22,16 @@ export async function GET(request) {
 
     // Calcular el desplazamiento
     const skip = (pageNumber - 1) * pageSizeNumber;
+
+    const estados_filter = estado !== ""? {
+      estado: {
+        equals: estado
+      }
+    }: {
+      estado: {
+        in: estados
+      }
+    };
 
     // Filtro por asesor
     const asesorFilter = asesor
@@ -69,7 +80,7 @@ export async function GET(request) {
         ...fechaFilter,
         ...accionFilter,
         ...searchFilter,
-        estado: { in: estados },
+        ...estados_filter,
       },
       skip: skip,
       take: pageSizeNumber,

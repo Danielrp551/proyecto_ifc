@@ -43,7 +43,7 @@ import { getStateInfo } from "@/app/utils/stateMapping";
 import { DateFilterv2 } from "@/components/date-filter_v2";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { startOfDay,endOfDay } from "date-fns";
+import { startOfDay, endOfDay } from "date-fns";
 
 const GestoresPage = () => {
   const [gestores, setGestores] = useState([]);
@@ -57,10 +57,11 @@ const GestoresPage = () => {
   const [totalGestores, setTotalGestores] = useState(0);
   const [totalClientes, setTotalClientes] = useState(0);
   const [filtros, setFiltros] = useState({
-    asesor: "",
-    acciones: "",
+    asesor: "vacio",
+    acciones: "vacio",
     search: "",
     dateRange: { from: startOfDay(new Date()), to: endOfDay(new Date()) },
+    estado_cliente: "vacio",
   });
   const [tempSearch, setTempSearch] = useState("");
 
@@ -120,17 +121,18 @@ const GestoresPage = () => {
       setLoading(true);
       try {
         const search = filtros.search !== "" ? `&search=${filtros.search}` : "";
-        const asesor = filtros.asesor !== "" ? `&asesor=${filtros.asesor}` : "";
+        const estado = filtros.estado_cliente !== "" && filtros.estado_cliente !== "vacio" ? `&estado=${filtros.estado_cliente}` : "";
+        const asesor = filtros.asesor !== "" && filtros.asesor !== "vacio" ? `&asesor=${filtros.asesor}` : "";
         const dateRange =
           filtros.dateRange.from && filtros.dateRange.to
             ? `&fechaInicio=${filtros.dateRange.from.toISOString()}&fechaFin=${filtros.dateRange.to.toISOString()}`
             : "";
         const accion =
-          filtros.acciones !== "" ? `&accion=${filtros.acciones}` : "";
+          filtros.acciones !== "" && filtros.acciones !== "vacio" ? `&accion=${filtros.acciones}` : "";
         const response = await fetch(
           `/api/gestores/clientes?page=${
             page + 1
-          }&pageSize=${pageSize}${asesor}${accion}${dateRange}${search}`
+          }&pageSize=${pageSize}${asesor}${accion}${dateRange}${search}${estado}`
         );
         const data = await response.json();
         console.log("data clientes gestores", data);
@@ -364,7 +366,7 @@ const GestoresPage = () => {
                   onChange={(e) => handleInputChange("asesor", e.target.value)}
                   sx={{ backgroundColor: "#ffffff" }}
                 >
-                  <MenuItem value="">Todos</MenuItem>
+                  <MenuItem value="vacio">Todos</MenuItem>
                   {gestores.map((gestor) => (
                     <MenuItem
                       key={gestor.asesor_id}
@@ -373,6 +375,34 @@ const GestoresPage = () => {
                       {gestor.nombre + " " + gestor.primer_apellido}
                     </MenuItem>
                   ))}
+                </Select>
+              </FormControl>
+              <FormControl
+                variant="outlined"
+                size="small"
+                sx={{ minWidth: 170 }}
+              >
+                <InputLabel htmlFor="estado_cliente">
+                  Estado del cliente
+                </InputLabel>
+                <Select
+                  margin="normal"
+                  label="Estado del cliente"
+                  value={filtros.estado_cliente}
+                  onChange={(e) =>
+                    handleInputChange("estado_cliente", e.target.value)
+                  }
+                  sx={{ backgroundColor: "#ffffff" }}
+                >
+                  <MenuItem value="vacio">Todos</MenuItem>
+                  <MenuItem value="no interesado">
+                    Interesado con Reservas
+                  </MenuItem>
+                  <MenuItem value="activo">Activo</MenuItem>
+                  <MenuItem value="seguimiento">Seguimiento</MenuItem>
+                  <MenuItem value="interesado">Interesado</MenuItem>
+                  <MenuItem value="promesas de pago">Promesa de pago</MenuItem>
+                  <MenuItem value="cita agendada">Cita Agendada</MenuItem>
                 </Select>
               </FormControl>
               <FormControl
@@ -390,7 +420,7 @@ const GestoresPage = () => {
                   }
                   sx={{ backgroundColor: "#ffffff" }}
                 >
-                  <MenuItem value="">Todos</MenuItem>
+                  <MenuItem value="vacio">Todos</MenuItem>
                   <MenuItem value="cita_agendada">Cita Agendada</MenuItem>
                   <MenuItem value="volver_contactar">
                     Volver a contactar
@@ -419,10 +449,14 @@ const GestoresPage = () => {
                 variant="contained"
                 onClick={() => {
                   setFiltros({
-                    asesor: "",
-                    acciones: "",
+                    asesor: "vacio",
+                    acciones: "vacio",
                     search: "",
-                    dateRange: { from: startOfDay(new Date()), to: endOfDay(new Date()) },
+                    dateRange: {
+                      from: startOfDay(new Date()),
+                      to: endOfDay(new Date()),
+                    },
+                    estado_cliente: "vacio",
                   });
                   setTempSearch("");
 
@@ -626,6 +660,7 @@ const GestoresPage = () => {
                     handleInputChangeModal("acciones", e.target.value)
                   }
                 >
+                  <MenuItem value="vacio">Todos</MenuItem>
                   <MenuItem value="cita_agendada">Cita Agendada</MenuItem>
                   <MenuItem value="volver_contactar">
                     Volver a contactar
