@@ -299,8 +299,8 @@ const CalendarPage = () => {
               events={citas}
               datesSet={handleDateSet}
               height="auto"
-              slotMinTime="06:00:00"
-              slotMaxTime="23:00:00"
+              slotMinTime="08:00:00"
+              slotMaxTime="22:00:00"
               slotDuration="00:15:00"
               allDaySlot={false}
               stickyHeaderDates={true}
