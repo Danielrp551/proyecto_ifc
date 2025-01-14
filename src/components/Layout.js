@@ -22,7 +22,8 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import CampaignIcon from '@mui/icons-material/Campaign';
 import PeopleIcon from '@mui/icons-material/People';
 import NotificationsIcon from "@mui/icons-material/Notifications";
-import BadgeIcon from "@mui/icons-material/Badge";
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import BadgeIcon from '@mui/icons-material/Badge';
 import ContactPageIcon from "@mui/icons-material/ContactPage";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -138,6 +139,20 @@ export default function Layout({ children }) {
             <BadgeIcon  />
           </ListItemIcon>
           <ListItemText primary="Gestores" />
+        </ListItem>
+        <ListItem
+          button="true"
+          onClick={() => router.push("/citas")}
+          sx={{
+            "&:hover": { bgcolor: "#2D3748" },
+            px: 3,
+            py: 1.5,
+          }}
+        >
+          <ListItemIcon sx={{ color: "#fff" }}>
+            <CalendarMonthIcon  />
+          </ListItemIcon>
+          <ListItemText primary="Citas" />
         </ListItem>
         <ListItem
           button="true"
