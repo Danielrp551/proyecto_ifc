@@ -67,6 +67,20 @@ export default function Layout({ children }) {
       </Toolbar>
       <Divider sx={{ bgcolor: "#2D3748" }} />
       <List>
+      <ListItem
+          button="true"
+          onClick={() => router.push("/admin")}
+          sx={{
+            "&:hover": { bgcolor: "#2D3748" },
+            px: 3,
+            py: 1.5,
+          }}
+        >
+          <ListItemIcon sx={{ color: "#fff" }}>
+            <ContactPageIcon />
+          </ListItemIcon>
+          <ListItemText primary="Admin" />
+        </ListItem>
         <ListItem
           button="true"
           onClick={() => router.push("/leads")}

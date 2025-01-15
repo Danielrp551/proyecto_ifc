@@ -108,7 +108,7 @@ export async function GET(request) {
         ...fechaFilter,
         ...accionFilter,
         ...searchFilter,
-        estado: { in: estados },
+        ...estados_filter,
       },
     });
 
