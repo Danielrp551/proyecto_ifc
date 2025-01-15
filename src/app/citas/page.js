@@ -81,7 +81,7 @@ const CalendarPage = () => {
             const correctedStartDate = new Date(startDate.getTime() + 5 * 60 * 60 * 1000); // + 5 horas
             const endDate = new Date(correctedStartDate.getTime() + 30 * 60 * 1000);
           return {
-            title: `${cita.clientes.nombre} - ${cita.motivo}`,
+            title: `${cita.clientes.nombre} (${cita.clientes.celular})`,
             start: correctedStartDate.toISOString(), // Asegúrate de que esté en formato ISO
             end: endDate.toISOString(), // Si tienes fecha de fin
             backgroundColor:
@@ -97,6 +97,7 @@ const CalendarPage = () => {
                 cita.estado_cita === "eliminada" ? "Eliminada" :
                 cita.estado_cita === "confirmada" ? "Confirmada" : "No especificado",
             display: "block",
+            celular: cita.clientes.celular,
           };
         });
 
@@ -314,7 +315,7 @@ const CalendarPage = () => {
               expandRows={true}
               themeSystem="standard"
               editable={true}
-              eventMinHeight={40}
+              eventMinHeight={50}
               views={{
                 timeGridWeek: {
                   dayHeaderFormat: {
@@ -354,6 +355,9 @@ const CalendarPage = () => {
                       <Typography variant="caption" sx={{ fontWeight: 'bold', lineHeight: 1.2, mb: 0.5 }}>
                         {eventInfo.event.title}
                       </Typography>
+                      <Typography variant="caption" sx={{ fontSize: '0.75rem', lineHeight: 1 }}>
+                        {eventInfo.event.celular}
+                        </Typography>
                       <Typography variant="caption" sx={{ fontSize: '0.75rem', lineHeight: 1 }}>
                         {eventInfo.timeText}
                       </Typography>
