@@ -19,20 +19,22 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import LogoutIcon from "@mui/icons-material/Logout";
-import CampaignIcon from '@mui/icons-material/Campaign';
-import PeopleIcon from '@mui/icons-material/People';
+import CampaignIcon from "@mui/icons-material/Campaign";
+import PeopleIcon from "@mui/icons-material/People";
 import NotificationsIcon from "@mui/icons-material/Notifications";
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import BadgeIcon from '@mui/icons-material/Badge';
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import BadgeIcon from "@mui/icons-material/Badge";
 import ContactPageIcon from "@mui/icons-material/ContactPage";
 import { useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 
 const drawerWidth = 240;
 
 export default function Layout({ children }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true); // Control de la barra lateral
+  const { data: session, status } = useSession();
   const router = useRouter();
 
   const handleDrawerToggle = () => {
@@ -46,7 +48,10 @@ export default function Layout({ children }) {
   const handleLogout = () => {
     signOut({ callbackUrl: "/login" }); // Cierra sesión y redirige al login
   };
-  
+
+  const isAdmin = session?.user?.rol === "admin";
+
+  console.log("isAdmin", session?.user?.rol);
 
   const drawer = (
     <Box
@@ -67,20 +72,22 @@ export default function Layout({ children }) {
       </Toolbar>
       <Divider sx={{ bgcolor: "#2D3748" }} />
       <List>
-      <ListItem
-          button="true"
-          onClick={() => router.push("/admin")}
-          sx={{
-            "&:hover": { bgcolor: "#2D3748" },
-            px: 3,
-            py: 1.5,
-          }}
-        >
-          <ListItemIcon sx={{ color: "#fff" }}>
-            <ContactPageIcon />
-          </ListItemIcon>
-          <ListItemText primary="Admin" />
-        </ListItem>
+        {isAdmin && (
+          <ListItem
+            button="true"
+            onClick={() => router.push("/admin")}
+            sx={{
+              "&:hover": { bgcolor: "#2D3748" },
+              px: 3,
+              py: 1.5,
+            }}
+          >
+            <ListItemIcon sx={{ color: "#fff" }}>
+              <AdminPanelSettingsIcon />
+            </ListItemIcon>
+            <ListItemText primary="Admin" />
+          </ListItem>
+        )}
         <ListItem
           button="true"
           onClick={() => router.push("/leads")}
@@ -150,7 +157,7 @@ export default function Layout({ children }) {
           }}
         >
           <ListItemIcon sx={{ color: "#fff" }}>
-            <BadgeIcon  />
+            <BadgeIcon />
           </ListItemIcon>
           <ListItemText primary="Gestores" />
         </ListItem>
@@ -164,7 +171,7 @@ export default function Layout({ children }) {
           }}
         >
           <ListItemIcon sx={{ color: "#fff" }}>
-            <CalendarMonthIcon  />
+            <CalendarMonthIcon />
           </ListItemIcon>
           <ListItemText primary="Citas" />
         </ListItem>
@@ -228,12 +235,15 @@ export default function Layout({ children }) {
             component="div"
             sx={{ flexGrow: 1, fontWeight: "bold" }}
           >
-            IFC 
+            IFC
           </Typography>
           <IconButton color="inherit" sx={{ mr: 2 }}>
             <NotificationsIcon />
           </IconButton>
-          <Avatar alt="Usuario" src="https://trasplantecapilar.pe/wp-content/uploads/2024/09/logo-ifc.jpg" />
+          <Avatar
+            alt="Usuario"
+            src="https://trasplantecapilar.pe/wp-content/uploads/2024/09/logo-ifc.jpg"
+          />
         </Toolbar>
       </AppBar>
       <Box
@@ -267,7 +277,7 @@ export default function Layout({ children }) {
           p: 3,
           transition: "margin-left 0.3s",
           bgcolor: "#F7FAFC",
-          height: "100%"
+          height: "100%",
         }}
       >
         <Toolbar />

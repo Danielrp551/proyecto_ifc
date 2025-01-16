@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, use } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -52,7 +52,7 @@ const EventTooltip = ({ event }) => {
 const CalendarPage = () => {
   const [view, setView] = useState("timeGridWeek");
   const [citas, setCitas] = useState([]);
-  const [loading, setLoading] = useState(true); // Estado de carga inicializado en true
+  const [loading, setLoading] = useState(false); // Estado de carga inicializado en true
   const [error, setError] = useState(null);
   const [refresh, setRefresh] = useState(false);
 
@@ -61,101 +61,106 @@ const CalendarPage = () => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [startDate, setStartDate] = useState(startOfDay(new Date()));
   const [endDate, setEndDate] = useState(endOfDay(new Date()));
+  const [currentRange, setCurrentRange] = useState({
+    from: startOfDay(new Date()),
+    to: endOfDay(new Date()),
+  });
   const [filtros, setFiltros] = useState({
     dateRange: { from: startOfDay(new Date()), to: endOfDay(new Date()) },
   });
+  const [primerRender, setPrimerRender] = useState(false);
+  const isManualChange = useRef(false);
+  const [lastFetchedRange, setLastFetchedRange] = useState({ from: null, to: null });
 
-  useEffect(() => {
-    const fetchCitas = async () => {
-      setLoading(true); // Activar la carga al iniciar la solicitud
-      try {
-        const dateRange =
-          filtros.dateRange.from && filtros.dateRange.to
-            ? `fechaInicio=${filtros.dateRange.from.toISOString()}&fechaFin=${filtros.dateRange.to.toISOString()}`
-            : "";
-        const response = await fetch(`/api/citas?${dateRange}`);
-        const data = await response.json();
-        // Mapear la respuesta al formato de FullCalendar
-        const mappedEvents = data.citas.map((cita) => {
-            const startDate = new Date(cita.fecha_cita);
-            const correctedStartDate = new Date(startDate.getTime() + 5 * 60 * 60 * 1000); // + 5 horas
-            const endDate = new Date(correctedStartDate.getTime() + 30 * 60 * 1000);
-          return {
-            title: `${cita.clientes.nombre} (${cita.clientes.celular})`,
-            start: correctedStartDate.toISOString(), // Asegúrate de que esté en formato ISO
-            end: endDate.toISOString(), // Si tienes fecha de fin
-            backgroundColor:
-                cita.estado_cita === "agendada" ? "#1a73e8" :
-                cita.estado_cita === "eliminada" ? "#e67c73" :
-                cita.estado_cita === "confirmada" ? "#34a853" : "#000000", 
-            borderColor:
-                cita.estado_cita === "agendada" ? "#1a73e8" :
-                cita.estado_cita === "eliminada" ? "#e67c73" :
-                cita.estado_cita === "confirmada" ? "#34a853" : "#000000",
-            estado: 
-                cita.estado_cita === "agendada" ? "Agendada" :
-                cita.estado_cita === "eliminada" ? "Eliminada" :
-                cita.estado_cita === "confirmada" ? "Confirmada" : "No especificado",
-            display: "block",
-            celular: cita.clientes.celular,
-          };
-        });
+  const fetchCitas = async (start, end) => {
+    setLoading(true);
+    try {
+      const dateRange =
+        start && end
+          ? `fechaInicio=${start.toISOString()}&fechaFin=${end.toISOString()}`
+          : "";
+      const response = await fetch(`/api/citas?${dateRange}`);
+      const data = await response.json();
+      console.log("Citas:", data);
+      const mappedEvents = data.citas.map((cita) => {
+        const startDate = new Date(cita.fecha_cita);
+        const correctedStartDate = new Date(startDate.getTime() + 5 * 60 * 60 * 1000);
+        const endDate = new Date(correctedStartDate.getTime() + 30 * 60 * 1000);
+        return {
+          title: `${cita.clientes.nombre} (${cita.clientes.celular})`,
+          start: correctedStartDate.toISOString(),
+          end: endDate.toISOString(),
+          backgroundColor:
+            cita.estado_cita === "agendada" ? "#1a73e8" :
+            cita.estado_cita === "eliminada" ? "#e67c73" :
+            cita.estado_cita === "confirmada" ? "#34a853" : "#000000",
+          estado: cita.estado_cita || "No especificado",
+          display: "block",
+          celular: cita.clientes.celular,
+        };
+      });
+      setCitas(mappedEvents);
+    } catch (error) {
+      console.error("Error al cargar citas:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        console.log("data", data);
-        setCitas(mappedEvents);
-      } catch (err) {
-        setError("Error al cargar los datos de las citas");
-        setSnackbarMessage("Error al cargar las citas");
-        setOpenSnackbar(true);
-      } finally {
-        setLoading(false); // Desactivar la carga al finalizar la solicitud
-      }
-    };
-
-    fetchCitas();
-  }, [refresh]);
+  //useEffect(() => {fetchCitas(startOfDay(new Date()),endOfDay(new Date()))}, []);
 
   const calendarRef = useRef(null);
+  const handleDatesSet = (dateInfo) => {
+    if(!primerRender){
+      setPrimerRender(true);
+      fetchCitas(dateInfo.start, dateInfo.end);
+    }
+  };
 
   const handleViewChange = (newView) => {
+    console.log("View changed to:", newView);
     setView(newView);
     const calendarApi = calendarRef.current.getApi();
     calendarApi.changeView(newView);
+    fetchCitas(calendarApi.view.currentStart, calendarApi.view.currentEnd);
   };
 
   const handleTodayClick = () => {
+    console.log("Today clicked");
     const calendarApi = calendarRef.current.getApi();
     calendarApi.today();
+    fetchCitas(calendarApi.view.currentStart, calendarApi.view.currentEnd);
   };
 
   const handlePrevClick = () => {
+    console.log("Prev clicked");
     const calendarApi = calendarRef.current.getApi();
     calendarApi.prev();
+    fetchCitas(calendarApi.view.currentStart, calendarApi.view.currentEnd);
   };
 
   const handleNextClick = () => {
+    console.log("Next clicked");
     const calendarApi = calendarRef.current.getApi();
     calendarApi.next();
+    fetchCitas(calendarApi.view.currentStart, calendarApi.view.currentEnd);
   };
 
-  const handleDateSet = (dateInfo) => {
+const areDatesEqual = (date1, date2) => date1.getTime() === date2.getTime();
+/*
+const handleDateSet = (dateInfo) => {
     const newFrom = new Date(dateInfo.start);
     const newTo = new Date(dateInfo.end);
-  
-    // Evita actualizar `filtros` si el rango es el mismo
+
     if (
-      filtros.dateRange.from.getTime() !== newFrom.getTime() ||
-      filtros.dateRange.to.getTime() !== newTo.getTime()
+      currentRange.from.getTime() !== newFrom.getTime() ||
+      currentRange.to.getTime() !== newTo.getTime()
     ) {
-      setFiltros({
-        dateRange: {
-          from: newFrom,
-          to: newTo,
-        },
-      });
-      setRefresh(!refresh);
+      setCurrentRange({ from: newFrom, to: newTo });
+      setFiltros({ dateRange: { from: newFrom, to: newTo } });
     }
   };
+*/
 
   return (
     <Box
@@ -191,7 +196,7 @@ const CalendarPage = () => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <StyledButton
               variant="contained"
-              onClick={handleTodayClick}
+              onClick={() => handleTodayClick()}
               sx={{
                 backgroundColor: "rgba(0, 0, 0, 0.08)",
                 borderRadius: "40px",
@@ -298,7 +303,7 @@ const CalendarPage = () => {
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
               initialView={view}
               events={citas}
-              datesSet={handleDateSet}
+              datesSet={handleDatesSet}
               height="auto"
               slotMinTime="08:00:00"
               slotMaxTime="22:00:00"

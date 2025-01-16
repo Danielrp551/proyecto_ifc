@@ -17,20 +17,34 @@ export const authOptions = {
 
         // Busca el usuario en la tabla usuario
         const user = await prisma.usuario.findUnique({
-          where: { username: username }
+          where: { username: username },
+          select: {
+            usuario_id: true,
+            username: true,
+            password: true,
+            activo: true,
+            roles: {
+              select: {
+                nombre_rol: true,
+              },
+            },
+          },
         });
+        console.log("Usuario" , user);
 
         if (!user) {
           return null;
         }
 
-        // Si la contraseña está hasheada en la base de datos:
+        if(user.activo === 0)
+          return null;
+
         const isValid = await compare(password, user.password);
         if (!isValid) {
           return null;
         }
 
-        return { id: user.usuario_id, name: user.username, email: null };
+        return { id: user.usuario_id, name: user.username, email: null, rol: user.roles.nombre_rol };
       }
     })
   ],
@@ -40,6 +54,8 @@ export const authOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        token.rol = user.rol;
+
         // Consulta para obtener toda la información del asesor
         const asesor = await prisma.asesor.findFirst({
           where: { usuario_id: user.id },
@@ -61,6 +77,9 @@ export const authOptions = {
     async session({ session, token }) {
       if (token.asesor) {
         session.user.asesor = token.asesor; // Guarda toda la información en la sesión
+      }
+      if(token.rol){
+        session.user.rol = token.rol;
       }
       return session;
     }

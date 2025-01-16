@@ -145,7 +145,12 @@ model usuario {
   usuario_id Int      @id @default(autoincrement())
   username   String   @unique(map: "username") @db.VarChar(50)
   password   String   @db.VarChar(255)
+  rol_id     Int?     @default(2)
+  activo     Int      @default(1)
   asesor     asesor[]
+  roles      roles?   @relation(fields: [rol_id], references: [rol_id], onUpdate: NoAction, map: "fk_usuario_rol")
+
+  @@index([rol_id], map: "fk_usuario_rol")
 }
 
 model campa_as {
@@ -174,4 +179,11 @@ model cliente_campa_a {
   @@index([campa_a_id], map: "campaña_id")
   @@index([cliente_id], map: "cliente_id")
   @@map("cliente_campaña")
+}
+
+model roles {
+  rol_id      Int       @id @default(autoincrement())
+  nombre_rol  String    @unique(map: "nombre_rol") @db.VarChar(50)
+  descripcion String?   @db.VarChar(255)
+  usuario     usuario[]
 }

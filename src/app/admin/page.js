@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -26,100 +26,234 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-} from '@mui/material';
-import { Add, Edit, Block } from '@mui/icons-material';
+  setRef,
+} from "@mui/material";
+import { Add, Edit, Block } from "@mui/icons-material";
+import { set } from "date-fns";
 
-const roles = ['Administrador', 'Gestor', 'Usuario'];
+const roles = [
+  {
+    label: "Administrador",
+    value: "admin",
+  },
+  {
+    label: "Asesor",
+    value: "asesor",
+  },
+];
 
 const AdminPage = () => {
   const [users, setUsers] = useState([]);
   const [newUser, setNewUser] = useState({
-    nombre: '',
-    primerApellido: '',
-    segundoApellido: '',
-    celular: '',
-    email: '',
-    rol: '',
+    nombre: "",
+    primerApellido: "",
+    segundoApellido: "",
+    celular: "",
+    email: "",
+    rol: "",
   });
   const [snackbar, setSnackbar] = useState({
     open: false,
-    message: '',
-    severity: 'success',
+    message: "",
+    severity: "success",
   });
   const [modalOpen, setModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [disableDialogOpen, setDisableDialogOpen] = useState(false);
   const [userToDisable, setUserToDisable] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [usuarios, setUsuarios] = useState([]);
+  const [totalUsuarios, setTotalUsuarios] = useState(0);
+  const [error, setError] = useState(null);
+  const [refresh, setRefresh] = useState(false);
 
   useEffect(() => {
-    // Aquí normalmente harías una llamada a la API para obtener los usuarios
-    // Por ahora, usaremos datos de ejemplo
-    setUsers([
-      { id: 1, nombre: 'Juan', primerApellido: 'Pérez', email: 'juan@example.com', rol: 'Gestor', activo: true },
-      { id: 2, nombre: 'María', primerApellido: 'González', email: 'maria@example.com', rol: 'Usuario', activo: true },
-    ]);
-  }, []);
+    const fetchUsuarios = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/admin`);
+        const data = await response.json();
+        console.log("data de usuarios", data);
+        setUsuarios(data.usuarios);
+        setTotalUsuarios(data.totalUsuarios);
+      } catch (err) {
+        console.error("Error al cargar los datos de los clientes:", err);
+        setError("Error al cargar los datos de los clientes");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsuarios();
+  }, [refresh]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewUser({ ...newUser, [name]: value });
   };
 
-  const handleCreateUser = () => {
-    // Aquí normalmente enviarías los datos a tu API
-    const createdUser = { ...newUser, id: users.length + 1, activo: true };
-    setUsers([...users, createdUser]);
-    setNewUser({
-      nombre: '',
-      primerApellido: '',
-      segundoApellido: '',
-      celular: '',
-      email: '',
-      rol: '',
-    });
-    setModalOpen(false);
-    setSnackbar({ open: true, message: 'Usuario creado con éxito', severity: 'success' });
+  const handleCreateUser = async () => {
+    try {
+      const response = await fetch(`/api/admin`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newUser),
+      });
+  
+      if (response.ok) {
+        setSnackbar({
+          open: true,
+          message: "Usuario creado con éxito",
+          severity: "success",
+        });
+        setModalOpen(false);
+        setRefresh(!refresh); // Refresca la lista de usuarios
+        setNewUser({
+          nombre: "",
+          primerApellido: "",
+          segundoApellido: "",
+          celular: "",
+          email: "",
+          rol: "",
+        });
+      } else {
+        const errorData = await response.json();
+        setSnackbar({
+          open: true,
+          message: errorData.message || "Error al crear el usuario",
+          severity: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Error al crear el usuario:", error);
+      setSnackbar({
+        open: true,
+        message: "Error interno del servidor",
+        severity: "error",
+      });
+    }
   };
 
-  const handleEditUser = () => {
-    setUsers(users.map(user => 
-      user.id === editingUser.id ? editingUser : user
-    ));
-    setEditModalOpen(false);
-    setSnackbar({ open: true, message: 'Usuario actualizado con éxito', severity: 'success' });
+  const handleEditUser = async () => {
+    const updatedUser = {
+      usuario_id: editingUser.usuario_id,
+      username: editingUser.username,
+      rol: editingUser.rol,
+      nombre: editingUser.nombre,
+      primerApellido: editingUser.primerApellido,
+      segundoApellido: editingUser.segundoApellido,
+    };
+
+    try {
+      const response = await fetch(`/api/admin`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedUser),
+      });
+
+      if (response.ok) {
+        setEditModalOpen(false);
+        setSnackbar({
+          open: true,
+          message: "Usuario actualizado con éxito",
+          severity: "success",
+        });
+        setRefresh(!refresh);
+      } else {
+        throw new Error("Error al actualizar el usuario");
+      }
+    } catch (error) {
+      console.error("Error al actualizar el usuario:", error);
+      setSnackbar({
+        open: true,
+        message: "Error al actualizar el usuario",
+        severity: "error",
+      });
+    }
   };
 
-  const handleToggleUserStatus = () => {
-    setUsers(users.map(user => 
-      user.id === userToDisable.id ? { ...user, activo: !user.activo } : user
-    ));
-    setDisableDialogOpen(false);
-    setSnackbar({ open: true, message: 'Estado del usuario actualizado', severity: 'info' });
+  const handleToggleUserStatus = async (usuario) => {
+    try {
+      const response = await fetch(`/api/admin`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          usuario_id: usuario.usuario_id,
+          activo: usuario.activo ? 0 : 1,
+        }),
+      });
+
+      if (response.ok) {
+        setSnackbar({
+          open: true,
+          message: `Usuario ${
+            usuario.activo ? "inhabilitado" : "habilitado"
+          } con éxito`,
+          severity: "success",
+        });
+        setRefresh(!refresh); // Refresca la tabla de usuarios
+        setDisableDialogOpen(false);
+      } else {
+        throw new Error("Error al cambiar el estado del usuario");
+      }
+    } catch (error) {
+      console.error("Error al cambiar el estado del usuario:", error);
+      setSnackbar({
+        open: true,
+        message: "Error al cambiar el estado del usuario",
+        severity: "error",
+      });
+    }
   };
 
   const handleCloseSnackbar = (event, reason) => {
-    if (reason === 'clickaway') {
+    if (reason === "clickaway") {
       return;
     }
     setSnackbar({ ...snackbar, open: false });
   };
 
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditingUser({ ...editingUser, [name]: value });
+  };
+
+  const handleEditClick = (user) => {
+    const asesor = user.asesor[0]; // Extraemos el primer asesor
+    const editingUserObj = {
+      usuario_id: user.usuario_id,
+      username: user.username,
+      nombre: asesor?.nombre || "",
+      primerApellido: asesor?.primer_apellido || "",
+      segundoApellido: asesor?.segundo_apellido || "",
+      celular: asesor?.celular || "",
+      rol: user.roles?.nombre_rol || "",
+    };
+
+    setEditingUser(editingUserObj);
+    setEditModalOpen(true);
+  };
+
   return (
-    <Box sx={{ maxWidth: 1200, margin: 'auto', mt: 4 }}>
-      <Typography variant="h4" gutterBottom sx={{ mb: 4, color: '#333' }}>
+    <Box sx={{ maxWidth: 1200, margin: "auto", mt: 4 }}>
+      <Typography variant="h4" gutterBottom sx={{ mb: 4, color: "#333" }}>
         Administración de Usuarios
       </Typography>
 
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
         <Button
           variant="contained"
           startIcon={<Add />}
           onClick={() => setModalOpen(true)}
           sx={{
-            backgroundColor: '#1976d2',
-            '&:hover': {
-              backgroundColor: '#115293',
+            backgroundColor: "#1976d2",
+            "&:hover": {
+              backgroundColor: "#115293",
             },
           }}
         >
@@ -130,7 +264,7 @@ const AdminPage = () => {
       <TableContainer component={Paper} elevation={3}>
         <Table>
           <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+            <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
               <TableCell>Nombre</TableCell>
               <TableCell>Email</TableCell>
               <TableCell>Rol</TableCell>
@@ -139,24 +273,23 @@ const AdminPage = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell>{`${user.nombre} ${user.primerApellido}`}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{user.rol}</TableCell>
-                <TableCell>{user.activo ? 'Activo' : 'Inactivo'}</TableCell>
+            {usuarios.map((user) => (
+              <TableRow key={user.usuario_id}>
+                <TableCell>{`${user.asesor[0].nombre} ${user.asesor[0].primer_apellido}`}</TableCell>
+                <TableCell>{user.username}</TableCell>
+                <TableCell>{user.roles.nombre_rol}</TableCell>
+                <TableCell>{user.activo ? "Activo" : "Inactivo"}</TableCell>
                 <TableCell>
-                  <IconButton onClick={() => {
-                    setEditingUser(user);
-                    setEditModalOpen(true);
-                  }}>
+                  <IconButton onClick={() => handleEditClick(user)}>
                     <Edit />
                   </IconButton>
-                  <IconButton onClick={() => {
-                    setUserToDisable(user);
-                    setDisableDialogOpen(true);
-                  }}>
-                    <Block color={user.activo ? 'action' : 'error'} />
+                  <IconButton
+                    onClick={() => {
+                      setUserToDisable(user);
+                      setDisableDialogOpen(true);
+                    }}
+                  >
+                    <Block color={user.activo ? "action" : "error"} />
                   </IconButton>
                 </TableCell>
               </TableRow>
@@ -171,77 +304,98 @@ const AdminPage = () => {
         onClose={() => setModalOpen(false)}
         aria-labelledby="modal-crear-usuario"
       >
-        <Box sx={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: 400,
-          bgcolor: 'background.paper',
-          boxShadow: 24,
-          p: 4,
-          borderRadius: 2,
-        }}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 600,
+            bgcolor: "background.paper",
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 2,
+          }}
+        >
           <Typography variant="h6" component="h2" gutterBottom>
             Crear Nuevo Usuario
           </Typography>
-          <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              name="nombre"
-              label="Nombre"
-              value={newUser.nombre}
-              onChange={handleInputChange}
-              required
-            />
-            <TextField
-              name="primerApellido"
-              label="Primer Apellido"
-              value={newUser.primerApellido}
-              onChange={handleInputChange}
-              required
-            />
-            <TextField
-              name="segundoApellido"
-              label="Segundo Apellido"
-              value={newUser.segundoApellido}
-              onChange={handleInputChange}
-            />
-            <TextField
-              name="celular"
-              label="Celular"
-              value={newUser.celular}
-              onChange={handleInputChange}
-              required
-            />
-            <TextField
-              name="email"
-              label="Email"
-              type="email"
-              value={newUser.email}
-              onChange={handleInputChange}
-              required
-            />
-            <FormControl fullWidth>
-              <InputLabel>Rol</InputLabel>
-              <Select
-                name="rol"
-                value={newUser.rol}
+          <Box
+            component="form"
+            sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+          >
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <TextField
+                sx={{ flex: 1 }}
+                name="nombre"
+                label="Nombre"
+                value={newUser.nombre}
                 onChange={handleInputChange}
                 required
-              >
-                {roles.map((rol) => (
-                  <MenuItem key={rol} value={rol}>{rol}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+              />
+              <TextField
+                sx={{ flex: 1 }}
+                name="primerApellido"
+                label="Primer Apellido"
+                value={newUser.primerApellido}
+                onChange={handleInputChange}
+                required
+              />
+            </Box>
+
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <TextField
+                sx={{ flex: 1 }}
+                name="segundoApellido"
+                label="Segundo Apellido"
+                value={newUser.segundoApellido}
+                onChange={handleInputChange}
+              />
+              <TextField
+                sx={{ flex: 1 }}
+                name="celular"
+                label="Celular"
+                value={newUser.celular}
+                onChange={handleInputChange}
+                required
+              />
+            </Box>
+
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <TextField
+                sx={{ flex: 1 }}
+                name="email"
+                label="Email"
+                type="email"
+                value={newUser.email}
+                onChange={handleInputChange}
+                required
+                email="true"
+              />
+              <FormControl sx={{ flex: 1 }}>
+                <InputLabel>Rol</InputLabel>
+                <Select
+                  name="rol"
+                  value={newUser.rol}
+                  onChange={handleInputChange}
+                  required
+                >
+                  {roles.map((rol,index) => (
+                    <MenuItem key={index} value={rol.value}>
+                      {rol.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
             <Button
               variant="contained"
               onClick={handleCreateUser}
               sx={{
                 mt: 2,
-                backgroundColor: '#1976d2',
-                '&:hover': {
-                  backgroundColor: '#115293',
+                backgroundColor: "#1976d2",
+                "&:hover": {
+                  backgroundColor: "#115293",
                 },
               }}
             >
@@ -257,54 +411,62 @@ const AdminPage = () => {
         onClose={() => setEditModalOpen(false)}
         aria-labelledby="modal-editar-usuario"
       >
-        <Box sx={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: 400,
-          bgcolor: 'background.paper',
-          boxShadow: 24,
-          p: 4,
-          borderRadius: 2,
-        }}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 400,
+            bgcolor: "background.paper",
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 2,
+          }}
+        >
           <Typography variant="h6" component="h2" gutterBottom>
             Editar Usuario
           </Typography>
           {editingUser && (
-            <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box
+              component="form"
+              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+            >
               <TextField
                 name="nombre"
                 label="Nombre"
                 value={editingUser.nombre}
-                onChange={(e) => setEditingUser({...editingUser, nombre: e.target.value})}
+                onChange={handleEditInputChange}
                 required
               />
               <TextField
                 name="primerApellido"
                 label="Primer Apellido"
                 value={editingUser.primerApellido}
-                onChange={(e) => setEditingUser({...editingUser, primerApellido: e.target.value})}
+                onChange={handleEditInputChange}
                 required
               />
               <TextField
-                name="email"
-                label="Email"
+                name="username"
+                label="Email (username)"
                 type="email"
-                value={editingUser.email}
-                onChange={(e) => setEditingUser({...editingUser, email: e.target.value})}
+                value={editingUser.username}
+                onChange={handleEditInputChange}
                 required
               />
+
               <FormControl fullWidth>
                 <InputLabel>Rol</InputLabel>
                 <Select
                   name="rol"
                   value={editingUser.rol}
-                  onChange={(e) => setEditingUser({...editingUser, rol: e.target.value})}
+                  onChange={handleEditInputChange}
                   required
                 >
-                  {roles.map((rol) => (
-                    <MenuItem key={rol} value={rol}>{rol}</MenuItem>
+                  {roles.map((rol, index) => (
+                    <MenuItem key={index} value={rol.value}>
+                      {rol.label}
+                    </MenuItem>
                   ))}
                 </Select>
               </FormControl>
@@ -313,9 +475,9 @@ const AdminPage = () => {
                 onClick={handleEditUser}
                 sx={{
                   mt: 2,
-                  backgroundColor: '#1976d2',
-                  '&:hover': {
-                    backgroundColor: '#115293',
+                  backgroundColor: "#1976d2",
+                  "&:hover": {
+                    backgroundColor: "#115293",
                   },
                 }}
               >
@@ -334,18 +496,23 @@ const AdminPage = () => {
         aria-describedby="alert-dialog-description"
       >
         <DialogTitle id="alert-dialog-title">
-          {`¿Estás seguro de que quieres ${userToDisable?.activo ? 'inhabilitar' : 'habilitar'} este usuario?`}
+          {`¿Estás seguro de que quieres ${
+            userToDisable?.activo ? "inhabilitar" : "habilitar"
+          } este usuario?`}
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
             {userToDisable?.activo
-              ? 'El usuario no podrá acceder al sistema si lo inhabilitas.'
-              : 'El usuario podrá volver a acceder al sistema si lo habilitas.'}
+              ? "El usuario no podrá acceder al sistema si lo inhabilitas."
+              : "El usuario podrá volver a acceder al sistema si lo habilitas."}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDisableDialogOpen(false)}>Cancelar</Button>
-          <Button onClick={handleToggleUserStatus} autoFocus>
+          <Button
+            onClick={() => handleToggleUserStatus(userToDisable)}
+            autoFocus
+          >
             Confirmar
           </Button>
         </DialogActions>
@@ -355,9 +522,13 @@ const AdminPage = () => {
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>
@@ -366,4 +537,3 @@ const AdminPage = () => {
 };
 
 export default AdminPage;
-
