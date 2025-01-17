@@ -79,7 +79,7 @@ const CalendarPage = () => {
         start && end
           ? `fechaInicio=${start.toISOString()}&fechaFin=${end.toISOString()}`
           : "";
-      const response = await fetch(`/api/citas?${dateRange}`);
+      const response = await fetch(`/api/citas`);
       const data = await response.json();
       console.log("Citas:", data);
       const mappedEvents = data.citas.map((cita) => {
@@ -122,21 +122,21 @@ const CalendarPage = () => {
     setView(newView);
     const calendarApi = calendarRef.current.getApi();
     calendarApi.changeView(newView);
-    fetchCitas(calendarApi.view.currentStart, calendarApi.view.currentEnd);
+    //fetchCitas(calendarApi.view.currentStart, calendarApi.view.currentEnd);
   };
 
   const handleTodayClick = () => {
     console.log("Today clicked");
     const calendarApi = calendarRef.current.getApi();
     calendarApi.today();
-    fetchCitas(calendarApi.view.currentStart, calendarApi.view.currentEnd);
+    //fetchCitas(calendarApi.view.currentStart, calendarApi.view.currentEnd);
   };
 
   const handlePrevClick = () => {
     console.log("Prev clicked");
     const calendarApi = calendarRef.current.getApi();
     calendarApi.prev();
-    fetchCitas(calendarApi.view.currentStart, calendarApi.view.currentEnd);
+    //fetchCitas(calendarApi.view.currentStart, calendarApi.view.currentEnd);
   };
 
   const handleNextClick = () => {
@@ -205,6 +205,7 @@ const handleDateSet = (dateInfo) => {
             >
               Hoy
             </StyledButton>
+            {/*
             <ButtonGroup>
               <IconButton
                 size="small"
@@ -221,6 +222,7 @@ const handleDateSet = (dateInfo) => {
                 <ChevronRight />
               </IconButton>
             </ButtonGroup>
+            */}
           </Box>
 
           <ButtonGroup

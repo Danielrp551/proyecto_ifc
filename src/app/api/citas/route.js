@@ -5,32 +5,29 @@ export async function GET(request) {
   try {
     const { fechaInicio = "", fechaFin = "" } = Object.fromEntries(new URL(request.url).searchParams);
 
-    if (!fechaInicio || !fechaFin) {
-      return NextResponse.json(
-        { message: "Por favor, proporciona ambas fechas: fechaInicio y fechaFin." },
-        { status: 400 }
-      );
-    }
+    // If no dates are provided, fetch all records without date limits
+    const fechaInicioDate = fechaInicio ? new Date(fechaInicio) : null;
+    const fechaFinDate = fechaFin ? new Date(fechaFin) : null;
 
-    // Convertir las fechas de inicio y fin a objetos Date
-    const fechaInicioDate = new Date(fechaInicio);
-    const fechaFinDate = new Date(fechaFin);
-
-    if (isNaN(fechaInicioDate.getTime()) || isNaN(fechaFinDate.getTime())) {
+    if ((fechaInicio && isNaN(fechaInicioDate.getTime())) || (fechaFin && isNaN(fechaFinDate.getTime()))) {
       return NextResponse.json(
         { message: "Formato de fecha inválido. Utiliza YYYY-MM-DD." },
         { status: 400 }
       );
     }
 
+    const whereCondition = fechaInicioDate && fechaFinDate
+      ? {
+          fecha_cita: {
+            gte: fechaInicioDate,
+            lte: fechaFinDate,
+          },
+        }
+      : {};
+
     // Consulta de las citas en el rango de fechas
     const citas = await prisma.citas.findMany({
-      where: {
-        fecha_cita: {
-          gte: fechaInicioDate,
-          lte: fechaFinDate,
-        },
-      },
+      where: whereCondition,
       orderBy: {
         fecha_cita: "asc",
       },
@@ -53,12 +50,7 @@ export async function GET(request) {
     });
 
     const totalCitas = await prisma.citas.count({
-      where: {
-        fecha_cita: {
-          gte: fechaInicioDate,
-          lte: fechaFinDate,
-        },
-      },
+      where: whereCondition,
     });
 
     if (!citas) {
