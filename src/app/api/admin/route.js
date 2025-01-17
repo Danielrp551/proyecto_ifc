@@ -2,60 +2,9 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { hash } from "bcrypt";
 
-const handleCreateUser = async () => {
-  try {
-    // Hashear el username para usarlo como contraseña
-    const hashedPassword = await bcrypt.hash(newUser.username, 10);
-
-    const response = await fetch(`/api/admin`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        ...newUser,
-        password: hashedPassword, // Enviar la contraseña hasheada
-      }),
-    });
-
-    if (response.ok) {
-      setSnackbar({
-        open: true,
-        message: "Usuario creado con éxito",
-        severity: "success",
-      });
-      setModalOpen(false);
-      setRefresh(!refresh); // Refresca la lista de usuarios
-      setNewUser({
-        nombre: "",
-        primerApellido: "",
-        segundoApellido: "",
-        celular: "",
-        email: "",
-        rol: "",
-      });
-    } else {
-      const errorData = await response.json();
-      setSnackbar({
-        open: true,
-        message: errorData.message || "Error al crear el usuario",
-        severity: "error",
-      });
-    }
-  } catch (error) {
-    console.error("Error al crear el usuario:", error);
-    setSnackbar({
-      open: true,
-      message: "Error interno del servidor",
-      severity: "error",
-    });
-  }
-};
-
-
 export async function GET(request) {
   try {
-    const { search = "", page = "1", pageSize = "10", rol = "" } = Object.fromEntries(new URL(request.url).searchParams);
+    const { search = "", page = "1", pageSize = "10", rol = "", usuario_id="" } = Object.fromEntries(new URL(request.url).searchParams);
 
     // Convertir `page` y `pageSize` a números
     const pageNumber = parseInt(page, 10);
@@ -85,10 +34,18 @@ export async function GET(request) {
         }
       : {};
 
+    const usuarioFilter = usuario_id
+      ? {
+        NOT: {
+          usuario_id: parseInt(usuario_id, 10),
+        },
+      }
+    : {};
+
     // Obtener todos los usuarios con la información de asesor y rol
     const usuarios = await prisma.usuario.findMany({
       where: {
-        AND: [rolFilter, searchFilter],
+        AND: [rolFilter, searchFilter,usuarioFilter],
       },
       skip: skip,
       take: pageSizeNumber,
@@ -121,7 +78,7 @@ export async function GET(request) {
     // Contar el total de usuarios para la paginación
     const totalUsuarios = await prisma.usuario.count({
       where: {
-        AND: [rolFilter, searchFilter],
+        AND: [rolFilter, searchFilter,usuarioFilter],
       },
     });
 

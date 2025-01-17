@@ -26,10 +26,12 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  setRef,
+  CircularProgress,
+  TablePagination,
 } from "@mui/material";
 import { Add, Edit, Block } from "@mui/icons-material";
 import { set } from "date-fns";
+import { useSession } from "next-auth/react";
 
 const roles = [
   {
@@ -67,26 +69,49 @@ const AdminPage = () => {
   const [totalUsuarios, setTotalUsuarios] = useState(0);
   const [error, setError] = useState(null);
   const [refresh, setRefresh] = useState(false);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [asesor, setAsesor] = useState(null);
+
+  const { data: session, status } = useSession();
+
+  if (session) {
+    const asesor = session.user?.asesor;
+    console.log("Asesor: ", asesor);
+  }
 
   useEffect(() => {
     const fetchUsuarios = async () => {
+      if (!session || !session.user) {
+        console.log("Esperando a que la sesión esté disponible...");
+        return; // No ejecutar el fetch hasta que la sesión esté disponible
+      }
+
       setLoading(true);
       try {
-        const response = await fetch(`/api/admin`);
+        const usuario_id = session?.user?.asesor?.usuario_id ? `&usuario_id=${session?.user?.asesor?.usuario_id}` : "";
+        const response = await fetch(`/api/admin?page=${page + 1}&pageSize=${pageSize}${usuario_id}`);
+        if (!response.ok) {
+          throw new Error("Error al obtener los usuarios");
+        }
         const data = await response.json();
-        console.log("data de usuarios", data);
+        console.log("Usuarios:", data.usuarios);
+        console.log("Asesor fetch : ", session?.user?.asesor)
         setUsuarios(data.usuarios);
         setTotalUsuarios(data.totalUsuarios);
       } catch (err) {
-        console.error("Error al cargar los datos de los clientes:", err);
-        setError("Error al cargar los datos de los clientes");
+        console.error("Error al cargar los datos de los usuarios:", err);
+        setError("Error al cargar los datos de los usuarios");
+        setSnackbar({ open: true, message: "Error al cargar usuarios", severity: "error" });
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUsuarios();
-  }, [refresh]);
+    if (status === "authenticated") {
+      fetchUsuarios();
+    }
+  }, [page, pageSize, refresh, session, status]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -102,7 +127,7 @@ const AdminPage = () => {
         },
         body: JSON.stringify(newUser),
       });
-  
+
       if (response.ok) {
         setSnackbar({
           open: true,
@@ -239,64 +264,97 @@ const AdminPage = () => {
     setEditModalOpen(true);
   };
 
+  const handlePageChange = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handlePageSizeChange = (event) => {
+    setPageSize(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
   return (
-    <Box sx={{ maxWidth: 1200, margin: "auto", mt: 4 }}>
+    <Box sx={{ maxWidth: 1200, margin: "auto", mt: 4, p: 2 }}>
       <Typography variant="h4" gutterBottom sx={{ mb: 4, color: "#333" }}>
         Administración de Usuarios
       </Typography>
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={() => setModalOpen(true)}
-          sx={{
-            backgroundColor: "#1976d2",
-            "&:hover": {
-              backgroundColor: "#115293",
-            },
-          }}
-        >
-          Crear Usuario
-        </Button>
-      </Box>
+      {/* Loading indicator */}
+      {loading && (
+        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: 400 }}>
+          <CircularProgress />
+        </Box>
+      )}
 
-      <TableContainer component={Paper} elevation={3}>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
-              <TableCell>Nombre</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Rol</TableCell>
-              <TableCell>Estado</TableCell>
-              <TableCell>Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {usuarios.map((user) => (
-              <TableRow key={user.usuario_id}>
-                <TableCell>{`${user.asesor[0].nombre} ${user.asesor[0].primer_apellido}`}</TableCell>
-                <TableCell>{user.username}</TableCell>
-                <TableCell>{user.roles.nombre_rol}</TableCell>
-                <TableCell>{user.activo ? "Activo" : "Inactivo"}</TableCell>
-                <TableCell>
-                  <IconButton onClick={() => handleEditClick(user)}>
-                    <Edit />
-                  </IconButton>
-                  <IconButton
-                    onClick={() => {
-                      setUserToDisable(user);
-                      setDisableDialogOpen(true);
-                    }}
-                  >
-                    <Block color={user.activo ? "action" : "error"} />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      {!loading && !error && (
+        <>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => setModalOpen(true)}
+              sx={{
+                backgroundColor: "#1976d2",
+                "&:hover": {
+                  backgroundColor: "#115293",
+                },
+              }}
+            >
+              Crear Usuario
+            </Button>
+          </Box>
+
+          <TableContainer component={Paper} elevation={3}>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
+                  <TableCell>Nombre</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Rol</TableCell>
+                  <TableCell>Estado</TableCell>
+                  <TableCell>Acciones</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {usuarios.map((user) => (
+                  <TableRow key={user.usuario_id}>
+                    <TableCell>{`${user.asesor[0].nombre} ${user.asesor[0].primer_apellido}`}</TableCell>
+                    <TableCell>{user.username}</TableCell>
+                    <TableCell>{user.roles.nombre_rol}</TableCell>
+                    <TableCell>{user.activo ? "Activo" : "Inactivo"}</TableCell>
+                    <TableCell>
+                      <IconButton onClick={() => handleEditClick(user)}>
+                        <Edit />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => {
+                          setUserToDisable(user);
+                          setDisableDialogOpen(true);
+                        }}
+                      >
+                        <Block color={user.activo ? "action" : "error"} />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            component="div"
+            count={totalUsuarios}
+            page={page}
+            onPageChange={handlePageChange}
+            rowsPerPage={pageSize}
+            onRowsPerPageChange={handlePageSizeChange}
+            rowsPerPageOptions={[5, 10, 25]}
+            labelRowsPerPage="Usuarios por página"
+          />
+        </>
+      )}
+
+      {/* Error message */}
+      {error && !loading && <Alert severity="error">{error}</Alert>}
 
       {/* Modal para crear usuario */}
       <Modal
@@ -380,7 +438,7 @@ const AdminPage = () => {
                   onChange={handleInputChange}
                   required
                 >
-                  {roles.map((rol,index) => (
+                  {roles.map((rol, index) => (
                     <MenuItem key={index} value={rol.value}>
                       {rol.label}
                     </MenuItem>
@@ -509,10 +567,7 @@ const AdminPage = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDisableDialogOpen(false)}>Cancelar</Button>
-          <Button
-            onClick={() => handleToggleUserStatus(userToDisable)}
-            autoFocus
-          >
+          <Button onClick={() => handleToggleUserStatus(userToDisable)} autoFocus>
             Confirmar
           </Button>
         </DialogActions>
@@ -537,3 +592,4 @@ const AdminPage = () => {
 };
 
 export default AdminPage;
+
