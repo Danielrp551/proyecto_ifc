@@ -31,6 +31,11 @@ export const stateMapping = {
     color: green[200],
     textColor: green[800]
   },
+  "nuevo": {
+    text: "Nuevo",
+    color: grey[100],
+    textColor: grey[800]
+  },
   default: {
     text: "Desconocido",
     color: grey[100],
