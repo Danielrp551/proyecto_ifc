@@ -262,7 +262,7 @@ const Reporte = () => {
                       {Object.entries(datos.accion).map(([accion, count]) => (
                         <Chip
                           key={accion}
-                          label={`${getActionInfo(accion).text}: ${count}`}
+                          label={`${getActionInfo(accion).text}: ${count} - ${(count/datos.total*100).toFixed(2)}%`}
                           sx={{
                             backgroundColor: getActionInfo(accion).color,
                             color: getActionInfo(accion).textColor,
