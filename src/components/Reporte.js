@@ -244,7 +244,7 @@ const Reporte = () => {
                   <TableRow key={index}>
                     <TableCell>
                       <Chip
-                        label={`${getStateInfo(datos.estado).text}: ${(
+                        label={`${getStateInfo(datos.estado).text}: ${datos.total} - ${(
                           (datos.total / totalEstadosData) *
                           100
                         ).toFixed(2)}%`}
