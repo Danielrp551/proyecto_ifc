@@ -144,7 +144,7 @@ export default function Layout({ children }) {
           <ListItemIcon sx={{ color: "#fff" }}>
             <PeopleIcon />
           </ListItemIcon>
-          <ListItemText primary="Clientes" />
+          <ListItemText primary="Nuevas conversaciones" />
         </ListItem>
         <ListItem
           button="true"

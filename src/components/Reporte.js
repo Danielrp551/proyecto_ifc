@@ -232,7 +232,7 @@ const Reporte = () => {
             <TableHead>
               <TableRow>
                 <TableCell>Estado</TableCell>
-                <TableCell>Converge(%)</TableCell>
+                <TableCell>Cobertura(%)</TableCell>
                 <TableCell>Recencia(días)</TableCell>
                 <TableCell>Intensity</TableCell>
                 <TableCell>Accion</TableCell>
