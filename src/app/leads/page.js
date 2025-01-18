@@ -194,6 +194,7 @@ export default function DashboardPage() {
               <SelectItem value="seguimiento">Seguimiento</SelectItem>
               <SelectItem value="interesado">Interesado</SelectItem>
               <SelectItem value="promesas de pago">Promesa de pago</SelectItem>
+              <SelectItem value="promesa_pago_cancelada">Promesa de pago cancelada</SelectItem>
               <SelectItem value="cita agendada">Cita Agendada</SelectItem>
             </Select>
           </FormControl>

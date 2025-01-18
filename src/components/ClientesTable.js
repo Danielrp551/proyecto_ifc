@@ -28,45 +28,7 @@ import {
 } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useRouter } from "next/navigation";
-import { blue, green, orange, red, grey, yellow } from "@mui/material/colors";
-
-const stateMapping = {
-  "no interesado": {
-    text: "Interesado con Reservas",
-    color: red[100],
-    textColor: red[800],
-  },
-  activo: {
-    text: "Activo",
-    color: green[100],
-    textColor: green[800],
-  },
-  seguimiento: {
-    text: "Seguimiento",
-    color: blue[100],
-    textColor: blue[800],
-  },
-  interesado: {
-    text: "Interesado",
-    color: yellow[100],
-    textColor: yellow[800],
-  },
-  "promesas de pago": {
-    text: "Promesa de pago",
-    color: orange[100],
-    textColor: orange[800],
-  },
-  "cita agendada": {
-    text: "Cita Agendada",
-    color: green[200],
-    textColor: green[800],
-  },
-  default: {
-    text: "Desconocido",
-    color: grey[100],
-    textColor: grey[800],
-  },
-};
+import { getStateInfo } from "@/app/utils/stateMapping";
 
 export default function ClientesTable({
   data,
@@ -240,7 +202,7 @@ export default function ClientesTable({
     nombreCompleto: `${cliente.nombre} ${cliente.apellido || ""}`.trim(),
     email: cliente.email || "",
     celular: cliente.celular,
-    estado: stateMapping[cliente.estado].text,
+    estado: getStateInfo(cliente.estado).text,
     bound: cliente.bound === true ? "INBOUND" : "OUTBOUND",
     fecha_creacion: cliente.fecha_creacion,
     fecha_ultima_interaccion: cliente.fecha_ultima_interaccion,

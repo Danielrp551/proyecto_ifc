@@ -396,6 +396,7 @@ export default function ClientsManagement() {
                   <MenuItem value="seguimiento">Seguimiento</MenuItem>
                   <MenuItem value="interesado">Interesado</MenuItem>
                   <MenuItem value="promesas de pago">Promesa de pago</MenuItem>
+                  <MenuItem value="promesa_pago_cancelada">Promesa de pago cancelada</MenuItem>
                   <MenuItem value="cita agendada">Cita Agendada</MenuItem>
                 </Select>
               </FormControl>

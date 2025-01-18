@@ -13,7 +13,7 @@ export async function GET(request) {
   const toDate = url.searchParams.get("toDate") || null;
   const reservaCancelada = url.searchParams.get("reservaCancelada") === "true";
 
-  const estados = estado? estado.split(',') : ["promesas de pago", "seguimiento", "interesado", "activo", "cita agendada", "no interesado","pendiente de contacto","nuevo"];
+  const estados = estado? estado.split(',') : ["promesa_pago_cancelada","promesas de pago", "seguimiento", "interesado", "activo", "cita agendada", "no interesado","pendiente de contacto","nuevo"];
   const bound_filter = bound === "inbound"? true : bound === "outbound"? false : null;
 
   if (clienteIds) {

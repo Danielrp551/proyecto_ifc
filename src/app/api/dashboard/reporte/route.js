@@ -19,7 +19,7 @@ export async function GET(request) {
       },
     };
 
-    const estados = ["promesas de pago", "seguimiento", "interesado", "activo", "cita agendada", "no interesado","nuevo"];
+    const estados = ["promesa_pago_cancelada","promesas de pago", "seguimiento", "interesado", "activo", "cita agendada", "no interesado","nuevo"];
     const estadosData = {};
 
     for (const estado of estados) {

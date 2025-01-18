@@ -7,7 +7,7 @@ export async function GET(request) {
     const page = parseInt(url.searchParams.get("page"), 10) || 1;
     const pageSize = parseInt(url.searchParams.get("pageSize"), 10) || 10;
 
-    const estados = ["promesas de pago", "seguimiento", "interesado", "activo", "cita agendada", "no interesado","pendiente de contacto","nuevo"]
+    const estados = ["promesa_pago_cancelada","promesas de pago", "seguimiento", "interesado", "activo", "cita agendada", "no interesado","pendiente de contacto","nuevo"]
 
     // Nuevos parámetros de filtro
     const estado = url.searchParams.get("estado"); // Filtrar por estado

@@ -36,6 +36,11 @@ export const stateMapping = {
     color: grey[100],
     textColor: grey[800]
   },
+  "promesa_pago_cancelada": {
+    text: "Promesa de pago cancelada",
+    color: red[100],
+    textColor: red[800]
+  },
   default: {
     text: "Desconocido",
     color: grey[100],

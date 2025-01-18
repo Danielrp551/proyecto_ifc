@@ -24,7 +24,7 @@ export async function GET(request) {
     const fechaInicioObj = new Date(fechaInicio);
     const fechaFinObj = new Date(fechaFin);
     
-    const estados = ["promesas de pago", "seguimiento", "interesado", "activo", "cita agendada", "no interesado","pendiente de contacto","nuevo"];
+    const estados = ["promesa_pago_cancelada","promesas de pago", "seguimiento", "interesado", "activo", "cita agendada", "no interesado","pendiente de contacto","nuevo"];
 
     // Filtro por asesor
     const asesorFilter = asesor

@@ -27,7 +27,6 @@ import {
 } from "recharts";
 import { endOfDay, startOfDay, differenceInHours } from "date-fns";
 import { DateFilterv2 } from "./date-filter_v2";
-import { blue, green, orange, red, grey, yellow } from "@mui/material/colors";
 import { stateMapping, getStateInfo } from "@/app/utils/stateMapping";
 
 export default function ConversationsChart() {
