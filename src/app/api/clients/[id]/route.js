@@ -139,7 +139,7 @@ export async function PUT(req, { params }) {
 
         // Marcar como eliminadas las citas existentes del cliente
         await prisma.citas.updateMany({
-          where: { cliente_id: parseInt(id), estado_cita: "agendada" },
+          where: { cliente_id: parseInt(id), estado_cita: { in: ["agendada","confirmada"]}},
           data: { estado_cita: "eliminada" },
         });
 
