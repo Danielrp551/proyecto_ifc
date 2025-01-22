@@ -21,7 +21,8 @@ async function getGoogleCalendarService() {
 
 // Eliminar eventos por rango de tiempo
 async function deleteEventsInRange(calendarService, fecha, horaInicio, duracionMinutos = 30) {
-  const start = new Date(`${fecha}T${horaInicio}:00`);
+  const fecha_inicio = new Date(`${fecha}T${horaInicio}:00`);
+  const start = new Date(fecha_inicio.getTime() + 5 * 60 * 60 * 1000);
   const end = new Date(start.getTime() + duracionMinutos * 60 * 1000);
 
   const events = await calendarService.events.list({
@@ -43,7 +44,8 @@ async function deleteEventsInRange(calendarService, fecha, horaInicio, duracionM
 
 // Crear un evento en Google Calendar
 async function createEvent(calendarService, summary, fecha, horaInicio, duracionMinutos = 60) {
-  const start = new Date(`${fecha}T${horaInicio}:00`);
+  const fecha_inicio = new Date(`${fecha}T${horaInicio}:00`);
+  const start = new Date(fecha_inicio.getTime() + 5 * 60 * 60 * 1000);
   const end = new Date(start.getTime() + duracionMinutos * 60 * 1000);
 
   const event = {
