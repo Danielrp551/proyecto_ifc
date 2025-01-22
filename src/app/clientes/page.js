@@ -257,6 +257,16 @@ export default function ClientsManagement() {
         gestor: editedData.gestor === " - " ? "" : editedData.gestor,
         asesorId: session.user?.asesor.asesor_id,
         acciones: editedData.acciones,
+        fechaCita:
+          editedData.acciones === "cita_agendada" ||
+          editedData.acciones === "promesa_de_pago"
+            ? editedData.fechaCita
+            : null,
+        horaCita:
+          editedData.acciones === "cita_agendada" ||
+          editedData.acciones === "promesa_de_pago"
+            ? editedData.horaCita
+            : null,
       });
       console.log("Body guardar:", body);
       const response = await fetch(`/api/clients/${editedData.cliente_id}`, {
@@ -289,8 +299,17 @@ export default function ClientsManagement() {
   };
 
   const handleSave = () => {
-    console.log("Datos guardados:", editedData);
-    console.log("Notas:", notes);
+    if (
+      (editedData.acciones === "cita_agendada" ||
+        editedData.acciones === "promesa_de_pago") &&
+      (!editedData.fechaCita || !editedData.horaCita)
+    ) {
+      setSnackbarMessage("La fecha y hora de la cita son obligatorias");
+      setSnackbarSeverity("error");
+      setOpenSnackbar(true);
+      return;
+    }
+  
     saveChanges();
   };
 
@@ -642,6 +661,37 @@ export default function ClientsManagement() {
                   <MenuItem value="promesa_de_pago">Promesa</MenuItem>
                 </Select>
               </FormControl>
+                    {(editedData.acciones === "cita_agendada" ||
+                editedData.acciones === "promesa_de_pago") && (
+                <>
+                  <TextField
+                    fullWidth
+                    margin="normal"
+                    type="date"
+                    label="Fecha de la cita"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    value={editedData.fechaCita || ""}
+                    onChange={(e) =>
+                      handleInputChangeModal("fechaCita", e.target.value)
+                    }
+                  />
+                  <TextField
+                    fullWidth
+                    margin="normal"
+                    type="time"
+                    label="Hora de la cita"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    value={editedData.horaCita || ""}
+                    onChange={(e) =>
+                      handleInputChangeModal("horaCita", e.target.value)
+                    }
+                  />
+                </>
+              )}
             </>
           )}
         </DialogContent>
