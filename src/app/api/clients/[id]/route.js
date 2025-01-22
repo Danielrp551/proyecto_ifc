@@ -125,8 +125,8 @@ export async function PUT(req, { params }) {
 
       // Manejar la acción de "cita agendada" o "promesa"
       if (body.acciones === "cita_agendada" || body.acciones === "promesa_de_pago") {
-        const nuevaCitaFechaUTC = new Date(`${body.fechaCita}T${body.horaCita}:00`);
-        const nuevaCitaFecha = new Date(nuevaCitaFechaUTC.getTime() - 5 * 60 * 60 * 1000);
+        const nuevaCitaFecha = new Date(`${body.fechaCita}T${body.horaCita}:00`);
+        //const nuevaCitaFecha = new Date(nuevaCitaFechaUTC.getTime() - 5 * 60 * 60 * 1000);
         const motivoCita = body.acciones === "cita_agendada" ? `Cita confirmada para ${clienteActual.nombre}` : `Cita reservada para ${clienteActual.nombre}`;
         const estadoCita = body.acciones === "cita_agendada" ? "confirmada" : "agendada";
 
