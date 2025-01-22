@@ -1,9 +1,65 @@
 import prisma from "@/lib/db";
 import { NextResponse } from "next/server";
 import { MongoClient } from 'mongodb';
+import { google } from 'googleapis';
 
 const uri = process.env.MONGODB_URI;
 const clientPromise = new MongoClient(uri).connect();
+
+const SCOPES = ["https://www.googleapis.com/auth/calendar"];
+const CALENDAR_ID = "ifc.citas@gmail.com";
+
+// Función para autenticarse con Google Calendar
+async function getGoogleCalendarService() {
+  const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
+  const auth = new google.auth.GoogleAuth({
+    credentials,
+    scopes: SCOPES,
+  });
+  return google.calendar({ version: "v3", auth });
+}
+
+// Eliminar eventos por rango de tiempo
+async function deleteEventsInRange(calendarService, fecha, horaInicio, duracionMinutos = 30) {
+  const start = new Date(`${fecha}T${horaInicio}:00`);
+  const end = new Date(start.getTime() + duracionMinutos * 60 * 1000);
+
+  const events = await calendarService.events.list({
+    calendarId: CALENDAR_ID,
+    timeMin: start.toISOString(),
+    timeMax: end.toISOString(),
+    singleEvents: true,
+    orderBy: "startTime",
+  });
+
+  for (const event of events.data.items || []) {
+    await calendarService.events.delete({
+      calendarId: CALENDAR_ID,
+      eventId: event.id,
+    });
+    console.log(`Evento eliminado: ${event.summary}`);
+  }
+}
+
+// Crear un evento en Google Calendar
+async function createEvent(calendarService, summary, fecha, horaInicio, duracionMinutos = 60) {
+  const start = new Date(`${fecha}T${horaInicio}:00`);
+  const end = new Date(start.getTime() + duracionMinutos * 60 * 1000);
+
+  const event = {
+    summary,
+    start: { dateTime: start.toISOString(), timeZone: "America/Lima" },
+    end: { dateTime: end.toISOString(), timeZone: "America/Lima" },
+  };
+
+  const createdEvent = await calendarService.events.insert({
+    calendarId: CALENDAR_ID,
+    requestBody: event,
+  });
+
+  console.log(`Evento creado: ${createdEvent.data.id}`);
+  return createdEvent.data;
+}
 
 export async function PUT(req, { params }) {
   const { id } = await params; // Obtén el ID del cliente desde la URL
@@ -13,7 +69,7 @@ export async function PUT(req, { params }) {
     // Obtener el cliente actual para verificar su gestor antes de actualizarlo
     const clienteActual = await prisma.clientes.findUnique({
       where: { cliente_id: parseInt(id) },
-      select: { gestor: true },
+      select: { gestor: true, nombre: true, apellido: true },
     });
 
     if (!clienteActual) {
@@ -64,6 +120,51 @@ export async function PUT(req, { params }) {
         });
       }
     }
+
+    const calendarService = await getGoogleCalendarService();
+
+      // Manejar la acción de "cita agendada" o "promesa"
+      if (body.acciones === "cita_agendada" || body.acciones === "promesa_de_pago") {
+        const nuevaCitaFechaUTC = new Date(`${body.fechaCita}T${body.horaCita}:00`);
+        const nuevaCitaFecha = new Date(nuevaCitaFechaUTC.getTime() - 5 * 60 * 60 * 1000);
+        const motivoCita = body.acciones === "cita_agendada" ? `Cita confirmada para ${clienteActual.nombre}` : `Cita reservada para ${clienteActual.nombre}`;
+        const estadoCita = body.acciones === "cita_agendada" ? "confirmada" : "agendada";
+
+        // Obtener las citas actuales del cliente que se van a marcar como eliminadas
+        const citasAEliminar = await prisma.citas.findMany({
+          where: { cliente_id: parseInt(id), estado_cita: "agendada" },
+        });
+
+        // Marcar como eliminadas las citas existentes del cliente
+        await prisma.citas.updateMany({
+          where: { cliente_id: parseInt(id), estado_cita: "agendada" },
+          data: { estado_cita: "eliminada" },
+        });
+
+        // Eliminar eventos correspondientes en Google Calendar
+        for (const cita of citasAEliminar) {
+          const fecha = cita.fecha_cita.toISOString().split("T")[0];
+          const horaInicio = new Date(cita.fecha_cita).toISOString().split("T")[1].slice(0, 5);
+          await deleteEventsInRange(calendarService, fecha, horaInicio);
+        }
+  
+        // Eliminar eventos de Google Calendar en el rango de tiempo
+        //await deleteEventsInRange(calendarService, body.fechaCita, body.horaCita);
+
+        // Crear una nueva cita para el cliente
+        const nuevaCita = await prisma.citas.create({
+          data: {
+            cliente_id: parseInt(id),
+            fecha_cita: nuevaCitaFecha,
+            estado_cita: estadoCita,
+            motivo: motivoCita,
+          },
+        });
+  
+        await createEvent(calendarService, motivoCita, body.fechaCita, body.horaCita);
+
+        console.log("Nueva cita creada:", nuevaCita);
+      }
 
     // Registra la acción comercial
     await prisma.acciones_comerciales.create({

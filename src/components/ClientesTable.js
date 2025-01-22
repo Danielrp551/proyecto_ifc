@@ -29,6 +29,7 @@ import {
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useRouter } from "next/navigation";
 import { getStateInfo } from "@/app/utils/stateMapping";
+import { set } from "date-fns";
 
 export default function ClientesTable({
   data,
@@ -60,6 +61,9 @@ export default function ClientesTable({
   const [conversationData, setConversationData] = useState(null);
   const [selectedConversation, setSelectedConversation] = useState(0);
 
+  const [selectedDate, setSelectedDate] = useState(null);
+const [selectedTime, setSelectedTime] = useState(null);
+
   const router = useRouter();
 
   const handleMenuOpen = (params, event) => {
@@ -89,6 +93,8 @@ export default function ClientesTable({
     setNotes("");
     setError(false);
     setEditedData(null);
+    setSelectedDate(null);
+    setSelectedTime(null);
   };
 
   const handleConversationDialogClose = () => {
@@ -127,6 +133,8 @@ export default function ClientesTable({
         gestor: editedData.gestor === " - " ? "" : editedData.gestor,
         asesorId: asesor.asesor_id,
         acciones: editedData.acciones,
+        fechaCita: editedData.acciones === "cita_agendada" || editedData.acciones === "promesa_de_pago" ? selectedDate : null,
+        horaCita: editedData.acciones === "cita_agendada" || editedData.acciones === "promesa_de_pago" ? selectedTime : null,
       });
       console.log("Body guardar:", body);
       const response = await fetch(`/api/clients/${editedData.id}`, {
@@ -371,6 +379,32 @@ export default function ClientesTable({
                   <MenuItem value="promesa_de_pago">Promesa</MenuItem>
                 </Select>
               </FormControl>
+              {editedData?.acciones === "promesa_de_pago" || editedData?.acciones === "cita_agendada" ? (
+                <>
+                  <TextField
+                    width="50%"
+                    margin="normal"
+                    type="date"
+                    label="Fecha de la cita"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                  />
+                  <TextField
+                    width="50%"
+                    margin="normal"
+                    type="time"
+                    label="Hora de la cita"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    value={selectedTime}
+                    onChange={(e) => setSelectedTime(e.target.value)}
+                  />
+                </>
+              ) : null}
 
               {/*
               <TextField
