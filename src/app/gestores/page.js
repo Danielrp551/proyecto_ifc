@@ -84,6 +84,10 @@ const GestoresPage = () => {
   const [conversationData, setConversationData] = useState(null);
   const [selectedConversation, setSelectedConversation] = useState(0);
 
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
+  const [commercialActionLoading, setCommercialActionLoading] = useState(false);
+
   const [refresh, setRefresh] = useState(false);
 
   const router = useRouter();
@@ -208,6 +212,7 @@ const GestoresPage = () => {
       ...selectedClient,
       nombreCompleto: selectedClient.nombre + " " + selectedClient.apellido,
     });
+    fetchCommercialAction(selectedClient.cliente_id);
     setOpenDialog(true);
     handleMenuClose();
     console.log("Acción Comercial de:", selectedClient);
@@ -218,6 +223,8 @@ const GestoresPage = () => {
     //setNotes("");
     setError(false);
     setEditedData(null);
+    setSelectedDate("");
+    setSelectedTime("");
   };
 
   const handleVerDetalles = () => {
@@ -242,12 +249,12 @@ const GestoresPage = () => {
         fechaCita:
           editedData.acciones === "cita_agendada" ||
           editedData.acciones === "promesa_de_pago"
-            ? editedData.fechaCita
+            ? selectedDate 
             : null,
         horaCita:
           editedData.acciones === "cita_agendada" ||
           editedData.acciones === "promesa_de_pago"
-            ? editedData.horaCita
+            ? selectedTime 
             : null,
       });
       console.log("Body guardar:", body);
@@ -284,7 +291,7 @@ const GestoresPage = () => {
     if (
       (editedData.acciones === "cita_agendada" ||
         editedData.acciones === "promesa_de_pago") &&
-      (!editedData.fechaCita || !editedData.horaCita)
+        (!selectedDate || !selectedTime)
     ) {
       setSnackbarMessage("La fecha y hora de la cita son obligatorias");
       setSnackbarSeverity("error");
@@ -332,6 +339,53 @@ const GestoresPage = () => {
       setConversationLoading(false);
     }
   };
+
+  const fetchCommercialAction = async (clientId) => {
+    setCommercialActionLoading(true);
+    console.log("Cliente ID:", clientId);
+    try {
+      // Realizar la solicitud a la API para obtener la última cita
+      const response = await fetch(`/api/clients/citas/${clientId}`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          // No se encontró ninguna cita
+          console.log("No hay citas agendadas o confirmadas para este cliente.");
+          setSelectedDate("");
+          setSelectedTime("");
+          return;
+        }
+        throw new Error("Error al cargar la acción comercial");
+      }
+  
+      const data = await response.json();
+      console.log("Datos Acción Comercial:", data);
+  
+      if (data && data.fecha_cita) {
+        const citaDate = new Date(data.fecha_cita);
+  
+        // Formatear la fecha para el input de tipo date (YYYY-MM-DD)
+        const formattedDate = citaDate.toISOString().split('T')[0];
+        setSelectedDate(formattedDate);
+  
+        // Formatear la hora para el input de tipo time (HH:MM)
+        const formattedTime = citaDate.toISOString().split('T')[1].substring(0,5);
+        setSelectedTime(formattedTime);
+      } else {
+        // Si no hay cita, limpiar los campos
+        setSelectedDate("");
+        setSelectedTime("");
+      }
+  
+    } catch (error) {
+      console.error("Error fetching commercial action:", error);
+      setSnackbarMessage("Error al cargar la acción comercial");
+      setSnackbarSeverity("error");
+      setOpenSnackbar(true);
+    } finally {
+      setCommercialActionLoading(false);
+    }
+  };
+  
 
   return (
     <Container className="py-8">
@@ -609,7 +663,19 @@ const GestoresPage = () => {
       >
         <DialogTitle>{dialogTitle}</DialogTitle>
         <DialogContent>
-          {editedData && (
+          { commercialActionLoading ? (
+            <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              height: 150,
+            }}
+          >
+            <CircularProgress />
+          </Box>
+        ) : (
+          editedData && (
             <>
               <TextField
                 fullWidth
@@ -703,10 +769,8 @@ const GestoresPage = () => {
                       InputLabelProps={{
                         shrink: true,
                       }}
-                      value={editedData.fechaCita || ""}
-                      onChange={(e) =>
-                        handleInputChangeModal("fechaCita", e.target.value)
-                      }
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
                     />
                     <TextField
                       fullWidth
@@ -716,15 +780,14 @@ const GestoresPage = () => {
                       InputLabelProps={{
                         shrink: true,
                       }}
-                      value={editedData.horaCita || ""}
-                      onChange={(e) =>
-                        handleInputChangeModal("horaCita", e.target.value)
-                      }
+                      value={selectedTime}
+                      onChange={(e) => setSelectedTime(e.target.value)}
                     />
                   </>
                 )}
             </>
-          )}
+          ))
+        }
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDialogClose}>Cerrar</Button>

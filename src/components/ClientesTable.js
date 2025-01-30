@@ -51,6 +51,8 @@ export default function ClientesTable({
   const [editedData, setEditedData] = useState(null); // Datos editados del cliente
   const [notes, setNotes] = useState(""); // Notas del cambio
   const [error, setError] = useState(false); // Validación de notas
+  const [commercialActionLoading, setCommercialActionLoading] = useState(false);
+
 
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -80,6 +82,7 @@ const [selectedTime, setSelectedTime] = useState(null);
     if (action === "comercial") {
       setDialogTitle("Acción Comercial (Cliente)");
       setOpenDialog(true);
+      fetchCommercialAction(selectedRow.id);
     } else if (action === "conversacion") {
       setOpenConversationDialog(true);
       fetchConversation(selectedRow.id);
@@ -236,6 +239,47 @@ const [selectedTime, setSelectedTime] = useState(null);
     router.push(`/clientes/${id}`); // Redirige a la página de detalles del cliente
   };
 
+  const fetchCommercialAction = async (clientId) => {
+    setCommercialActionLoading(true);
+    console.log("Cliente ID:", clientId);
+    try {
+      // Ajusta la ruta a la que necesitas hacer el fetch
+      const response = await fetch(`/api/clients/citas/${clientId}`);
+      if (!response.ok) {
+        throw new Error("Error al cargar la acción comercial");
+      }
+  
+      const data = await response.json();
+      console.log("Datos Acción Comercial:", data);
+  
+      if (data && data.fecha_cita) {
+        const citaDate = new Date(data.fecha_cita);
+  
+        // Formatear la fecha para el input de tipo date (YYYY-MM-DD)
+        const formattedDate = citaDate.toISOString().split('T')[0];
+        setSelectedDate(formattedDate);
+  
+        // Formatear la hora para el input de tipo time (HH:MM)
+        const formattedTime = citaDate.toISOString().split('T')[1].substring(0,5);
+        setSelectedTime(formattedTime);
+      } else {
+        // Si no hay cita, limpiar los campos
+        setSelectedDate(null);
+        setSelectedTime(null);
+      }
+  
+    } catch (error) {
+      console.error("Error fetching commercial action:", error);
+      setSnackbarMessage("Error al cargar la acción comercial");
+      setSnackbarSeverity("error");
+      setOpenSnackbar(true);
+    } finally {
+      setCommercialActionLoading(false);
+    }
+  };
+  
+
+
   return (
     <div
       style={{
@@ -297,6 +341,19 @@ const [selectedTime, setSelectedTime] = useState(null);
       >
         <DialogTitle>{dialogTitle}</DialogTitle>
         <DialogContent>
+        {commercialActionLoading ? (
+                <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: 150,
+                }}
+              >
+                <CircularProgress />
+              </Box>
+        ) : (
+          <>
           <p>
             <strong>Usuario actual:</strong>{" "}
             {asesor.nombre + " " + asesor.primer_apellido}
@@ -419,8 +476,11 @@ const [selectedTime, setSelectedTime] = useState(null);
                 rows={4}
               />
               */}
+               
             </>
           )}
+          </>
+        )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDialogClose}>Cerrar</Button>
