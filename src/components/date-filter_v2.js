@@ -50,7 +50,7 @@ const presets = [
   },
 ]
 
-export function DateFilterv2({ onDateChange, reset, setStartDate, setEndDate,setSelectedPreset, startDate, endDate,selectedPreset, TodoExist =true }) {
+export function DateFilterv2({ size = "small",onDateChange, reset, setStartDate, setEndDate,setSelectedPreset, startDate, endDate,selectedPreset, TodoExist =true }) {
   //const [startDate, setStartDate] = useState(new Date())
   //const [endDate, setEndDate] = useState(new Date())
   //const [selectedPreset, setSelectedPreset] = useState("Todo")
@@ -101,7 +101,7 @@ export function DateFilterv2({ onDateChange, reset, setStartDate, setEndDate,set
     <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
       <TextField
         select
-        size="small"
+        size= {size}
         value={selectedPreset}
         onChange={handlePresetChange}
         sx={{ minWidth: 180, backgroundColor: "#ffffff" }}
@@ -126,7 +126,7 @@ export function DateFilterv2({ onDateChange, reset, setStartDate, setEndDate,set
             maxDate={endOfDay(new Date())}
             slotProps={{
               textField: {
-                size: "small",
+                size: size,
                 sx: { backgroundColor: "#ffffff" }
               }
             }}
@@ -138,7 +138,7 @@ export function DateFilterv2({ onDateChange, reset, setStartDate, setEndDate,set
             disabled={selectedPreset !== "Rango específico"}
             slotProps={{
               textField: {
-                size: "small",
+                size: size,
                 sx: { backgroundColor: "#ffffff" }
               }
             }}
