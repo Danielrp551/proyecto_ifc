@@ -5,22 +5,27 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get('page')) || 1;
   const pageSize = parseInt(searchParams.get('pageSize')) || 10;
+  const type = searchParams.get('tipo');
   const skip = (page - 1) * pageSize;
 
   try {
+    const whereClause = type ? { tipo: type } : {};
+
     const [campaigns, totalCount] = await Promise.all([
       prisma.campa_as.findMany({
         skip,
         take: pageSize,
+        where: whereClause,
         orderBy: { fecha_creacion: 'desc' },
       }),
-      prisma.campa_as.count(),
+      prisma.campa_as.count({where: whereClause}),
     ]);
 
     return NextResponse.json({
       campaigns,
       totalPages: Math.ceil(totalCount / pageSize),
       currentPage: page,
+      totalCount: totalCount,
     });
   } catch (error) {
     console.error('Failed to fetch campaigns:', error);

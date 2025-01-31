@@ -102,11 +102,11 @@ export default function CampaignManagement() {
   const fetchCampaigns = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `/api/campaigns?type=${campaignTypeFilter}&page=${
-          page + 1
-        }&pageSize=${pageSize}`
-      );
+      const tipoParam =
+        campaignTypeFilter === "all" ? "" : `tipo=${campaignTypeFilter}`;
+        const response = await fetch(
+            `/api/campaigns?${tipoParam}&page=${page + 1}&pageSize=${pageSize}`
+          );
       const data = await response.json();
       setCampaigns(data.campaigns);
       setTotalCount(data.totalCount);
@@ -337,16 +337,20 @@ export default function CampaignManagement() {
         nombre_campania: outCampaignData.nombre_campa_a,
         descripcion_campania: outCampaignData.descripcion,
       };
-      
-      const response = await fetch("https://pdcgrsx8x0.execute-api.us-east-2.amazonaws.com/lambdaA", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bodyOut),
-      })
-      const data = await response.json()
-      if (!response.ok) { // ✅ Si el statusCode no es 200, mostrar error
-        throw new Error(data.message );
-      }    
+
+      const response = await fetch(
+        "https://pdcgrsx8x0.execute-api.us-east-2.amazonaws.com/lambdaA",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(bodyOut),
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) {
+        // ✅ Si el statusCode no es 200, mostrar error
+        throw new Error(data.message);
+      }
 
       console.log("Body out : ", bodyOut);
       //setCampaigns((prev) => [...prev, data])
@@ -366,10 +370,10 @@ export default function CampaignManagement() {
       });
       setSelectedPreset("Hoy");
     } catch (err) {
-        console.error("Error en handleOutCampaignSubmit:", err);
-        setSnackbarMessage(err.message || "Error al crear campaña OUT");
-        setSnackbarSeverity("error");
-        setOpenSnackbar(true);
+      console.error("Error en handleOutCampaignSubmit:", err);
+      setSnackbarMessage(err.message || "Error al crear campaña OUT");
+      setSnackbarSeverity("error");
+      setOpenSnackbar(true);
     } finally {
       setLoading(false);
     }
@@ -720,15 +724,19 @@ export default function CampaignManagement() {
                 }
               >
                 {Object.keys(stateMapping)
-                .filter((state) => !["activo", "default","nuevo"].includes(state))
-                .map((state) => (
-                  <MenuItem key={state} value={state}>
-                    <Checkbox
-                      checked={outCampaignData.clientStates.indexOf(state) > -1}
-                    />
-                    {stateMapping[state].text}
-                  </MenuItem>
-                ))}
+                  .filter(
+                    (state) => !["activo", "default", "nuevo"].includes(state)
+                  )
+                  .map((state) => (
+                    <MenuItem key={state} value={state}>
+                      <Checkbox
+                        checked={
+                          outCampaignData.clientStates.indexOf(state) > -1
+                        }
+                      />
+                      {stateMapping[state].text}
+                    </MenuItem>
+                  ))}
               </Select>
             </FormControl>
             <DateFilterv2
