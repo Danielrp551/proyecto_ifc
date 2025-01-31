@@ -366,7 +366,8 @@ export default function CampaignManagement() {
       });
       setSelectedPreset("Hoy");
     } catch (err) {
-      setSnackbarMessage("Error al crear campaña OUT");
+
+      setSnackbarMessage(err.message || "Error al crear campaña OUT");
       setSnackbarSeverity("error");
       setOpenSnackbar(true);
     } finally {
