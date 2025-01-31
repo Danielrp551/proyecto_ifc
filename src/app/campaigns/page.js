@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
 import {
   Container,
   Typography,
@@ -27,22 +27,30 @@ import {
   InputLabel,
   Checkbox,
   FormControlLabel,
-} from "@mui/material"
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns"
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider"
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker"
-import { DatePicker } from "@mui/x-date-pickers/DatePicker"
-import AddIcon from "@mui/icons-material/Add"
-import EditIcon from "@mui/icons-material/Edit"
-import VisibilityIcon from "@mui/icons-material/Visibility"
-import { stateMapping } from "../utils/stateMapping"
+  TablePagination,
+  IconButton,
+} from "@mui/material";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import InfoIcon from "@mui/icons-material/Info";
+import { stateMapping } from "../utils/stateMapping";
+import { DateFilterv2 } from "@/components/date-filter_v2";
+import { endOfDay, startOfDay } from "date-fns";
 
 export default function CampaignManagement() {
-  const [campaigns, setCampaigns] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [openDialog, setOpenDialog] = useState(false)
-  const [openOutCampaignDialog, setOpenOutCampaignDialog] = useState(false)
+  const [campaigns, setCampaigns] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [openOutCampaignDialog, setOpenOutCampaignDialog] = useState(false);
+  const [openTemplatePreviewDialog, setOpenTemplatePreviewDialog] =
+    useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [newCampaign, setNewCampaign] = useState({
     nombre_campa_a: "",
     descripcion: "",
@@ -52,17 +60,24 @@ export default function CampaignManagement() {
     fecha_inicio: null,
     fecha_fin: null,
     tipo: "in",
-  })
-  const [dialogMode, setDialogMode] = useState("create")
-  const [createCampaign, setCreateCampaign] = useState(false)
-  const [currentCampaignId, setCurrentCampaignId] = useState(null)
-  const [openSnackbar, setOpenSnackbar] = useState(false)
-  const [snackbarMessage, setSnackbarMessage] = useState("")
-  const [snackbarSeverity, setSnackbarSeverity] = useState("success")
-  const [campaignTypeFilter, setCampaignTypeFilter] = useState("all")
-  const [anchorEl, setAnchorEl] = useState(null)
-  const [errors, setErrors] = useState({})
+  });
+  const [dialogMode, setDialogMode] = useState("create");
+  const [createCampaign, setCreateCampaign] = useState(false);
+  const [currentCampaignId, setCurrentCampaignId] = useState(null);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+  const [campaignTypeFilter, setCampaignTypeFilter] = useState("all");
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [errors, setErrors] = useState({});
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
 
+  const [selectedPreset, setSelectedPreset] = useState("Hoy");
+  const [startDate, setStartDate] = useState(startOfDay(new Date()));
+  const [endDate, setEndDate] = useState(endOfDay(new Date()));
+  const [resetFilters, setResetFilters] = useState(false);
   const [outCampaignData, setOutCampaignData] = useState({
     nombre_campa_a: "",
     descripcion: "",
@@ -71,64 +86,105 @@ export default function CampaignManagement() {
     clientType: "in",
     considerPreviouslyContacted: false,
     selectedTemplate: "",
-    customDateRange: { start: null, end: null },
-  })
+    dateRange: { from: startOfDay(new Date()), to: endOfDay(new Date()) },
+  });
 
-  const [templates, setTemplates] = useState([])
-
-  useEffect(() => {
-    const fetchCampaigns = async () => {
-      setLoading(true)
-      try {
-        const response = await fetch(`/api/campaigns?type=${campaignTypeFilter}`)
-        const data = await response.json()
-        setCampaigns(data.campaigns)
-        setLoading(false)
-      } catch (err) {
-        setError("Failed to fetch campaigns")
-        setLoading(false)
-      }
-    }
-
-    fetchCampaigns()
-  }, [campaignTypeFilter])
+  const [templates, setTemplates] = useState([]);
 
   useEffect(() => {
-    const fetchTemplates = async () => {
-      try {
-        const response = await fetch("/api/templates")
-        const data = await response.json()
-        setTemplates(data.templates)
-      } catch (error) {
-        console.error("Error fetching templates:", error)
-      }
-    }
+    fetchCampaigns();
+  }, [campaignTypeFilter, page, pageSize]); //This line was flagged as needing fewer dependencies
 
-    fetchTemplates()
-  }, [])
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
+
+  const fetchCampaigns = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `/api/campaigns?type=${campaignTypeFilter}&page=${
+          page + 1
+        }&pageSize=${pageSize}`
+      );
+      const data = await response.json();
+      setCampaigns(data.campaigns);
+      setTotalCount(data.totalCount);
+      setLoading(false);
+    } catch (err) {
+      setError("Failed to fetch campaigns");
+      setLoading(false);
+    }
+  };
+
+  const fetchTemplates = async () => {
+    try {
+      const response = await fetch("/api/templates");
+      const data = await response.json();
+      console.log("Templates : ", data);
+      setTemplates(data.templates);
+    } catch (error) {
+      console.error("Error fetching templates:", error);
+    }
+  };
 
   const validateFields = () => {
-    const newErrors = {}
+    const newErrors = {};
     if (!newCampaign.nombre_campa_a.trim()) {
-      newErrors.nombre_campa_a = "Este campo es obligatorio"
+      newErrors.nombre_campa_a = "Este campo es obligatorio";
     }
     if (!newCampaign.mensaje_cliente.trim()) {
-      newErrors.mensaje_cliente = "Este campo es obligatorio"
+      newErrors.mensaje_cliente = "Este campo es obligatorio";
     }
     if (!newCampaign.fecha_inicio) {
-      newErrors.fecha_inicio = "Debe seleccionar una fecha de inicio"
+      newErrors.fecha_inicio = "Debe seleccionar una fecha de inicio";
     }
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateOutCampaignFields = () => {
+    const newErrors = {};
+
+    if (!outCampaignData.nombre_campa_a.trim()) {
+      newErrors.nombre_campa_a = "Este campo es obligatorio";
+    }
+    if (!outCampaignData.descripcion.trim()) {
+      newErrors.descripcion = "Este campo es obligatorio";
+    }
+    if (outCampaignData.clientStates.length === 0) {
+      newErrors.clientStates =
+        "Debes seleccionar al menos un estado de cliente";
+    }
+    if (!outCampaignData.timeRange) {
+      newErrors.timeRange = "Selecciona un rango de tiempo";
+    }
+    if (outCampaignData.timeRange === "custom") {
+      if (!outCampaignData.customDateRange.start) {
+        newErrors.customDateRangeStart = "Selecciona una fecha de inicio";
+      }
+      if (!outCampaignData.customDateRange.end) {
+        newErrors.customDateRangeEnd = "Selecciona una fecha de fin";
+      }
+    }
+    if (!outCampaignData.clientType) {
+      newErrors.clientType = "Selecciona un tipo de cliente";
+    }
+    if (!outCampaignData.selectedTemplate) {
+      newErrors.selectedTemplate = "Selecciona un template";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleOpenDialog = (type) => {
-    setDialogMode("create")
-    setErrors({})
+    setDialogMode("create");
+    setErrors({});
     if (type === "out") {
-      setOpenOutCampaignDialog(true)
+      setOpenOutCampaignDialog(true);
     } else {
-      setOpenDialog(true)
+      setOpenDialog(true);
       setNewCampaign({
         nombre_campa_a: "",
         descripcion: "",
@@ -138,87 +194,93 @@ export default function CampaignManagement() {
         fecha_inicio: null,
         fecha_fin: null,
         tipo: "in",
-      })
+      });
     }
-    setCreateCampaign(true)
-  }
+    setCreateCampaign(true);
+  };
 
   const handleCloseDialog = () => {
-    setOpenDialog(false)
-    setOpenOutCampaignDialog(false)
-  }
+    setOpenDialog(false);
+    setOpenOutCampaignDialog(false);
+  };
 
   const handleEditDialog = (campaign) => {
-    setDialogMode("edit")
-    setErrors({})
-    setOpenDialog(true)
+    setDialogMode("edit");
+    setErrors({});
+    setOpenDialog(true);
     setNewCampaign({
       nombre_campa_a: campaign.nombre_campa_a,
       descripcion: campaign.descripcion,
-      estado_campa_a: campaign.estado_campa_a,
+      estado_campaña: campaign.estado_campa_a,
       mensaje_cliente: campaign.mensaje_cliente,
       num_clientes: campaign.num_clientes,
       fecha_inicio: new Date(campaign.fecha_inicio),
       fecha_fin: campaign.fecha_fin ? new Date(campaign.fecha_fin) : null,
       tipo: campaign.tipo,
-    })
-    setCurrentCampaignId(campaign.campa_a_id)
-    setCreateCampaign(false)
-  }
+    });
+    setCurrentCampaignId(campaign.campa_a_id);
+    setCreateCampaign(false);
+  };
 
   const handleViewDialog = (campaign) => {
-    setErrors({})
-    setOpenDialog(true)
-    setDialogMode("view")
+    setErrors({});
+    setOpenDialog(true);
+    setDialogMode("view");
     setNewCampaign({
       nombre_campa_a: campaign.nombre_campa_a,
       descripcion: campaign.descripcion,
-      estado_campa_a: campaign.estado_campa_a,
+      estado_campaña: campaign.estado_campa_a,
       mensaje_cliente: campaign.mensaje_cliente,
       num_clientes: campaign.num_clientes,
       fecha_inicio: new Date(campaign.fecha_inicio),
       fecha_fin: campaign.fecha_fin ? new Date(campaign.fecha_fin) : null,
       tipo: campaign.tipo,
-    })
-  }
+    });
+  };
 
   const handleInputChange = (event) => {
-    const { name, value } = event.target
-    setNewCampaign((prev) => ({ ...prev, [name]: value }))
-  }
+    const { name, value } = event.target;
+    setNewCampaign((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleDateChange = (name) => (date) => {
-    setNewCampaign((prev) => ({ ...prev, [name]: date }))
-  }
+    setNewCampaign((prev) => ({ ...prev, [name]: date }));
+  };
 
   const handleSubmit = async (event) => {
-    event.preventDefault()
+    event.preventDefault();
     if (!validateFields()) {
-      console.log("Form has errors")
-      return
+      console.log("Form has errors");
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
     try {
-      const url = !createCampaign ? `/api/campaigns?id=${currentCampaignId}` : "/api/campaigns"
-      const method = !createCampaign ? "PUT" : "POST"
+      const url = !createCampaign
+        ? `/api/campaigns?id=${currentCampaignId}`
+        : "/api/campaigns";
+      const method = !createCampaign ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method: method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newCampaign),
-      })
-      if (!response.ok) throw new Error("Failed to create/update campaign")
-      const data = await response.json()
+      });
+      if (!response.ok) throw new Error("Failed to create/update campaign");
+      const data = await response.json();
 
       if (!createCampaign) {
-        setCampaigns((prev) => prev.map((campaign) => (campaign.campa_a_id === currentCampaignId ? data : campaign)))
-        setSnackbarMessage("Campaña actualizada exitosamente")
+        setCampaigns((prev) =>
+          prev.map((campaign) =>
+            campaign.campa_a_id === currentCampaignId ? data : campaign
+          )
+        );
+        setSnackbarMessage("Campaña actualizada exitosamente");
       } else {
-        setCampaigns((prev) => [...prev, data])
-        setSnackbarMessage("Campaña creada exitosamente")
+        setCampaigns((prev) => [...prev, data]);
+        setSnackbarMessage("Campaña creada exitosamente");
       }
-      handleCloseDialog()
+      handleCloseDialog();
       setNewCampaign({
         nombre_campa_a: "",
         descripcion: "",
@@ -228,37 +290,66 @@ export default function CampaignManagement() {
         fecha_inicio: null,
         fecha_fin: null,
         tipo: "in",
-      })
-      setSnackbarSeverity("success")
-      setOpenSnackbar(true)
+      });
+      setSnackbarSeverity("success");
+      setOpenSnackbar(true);
     } catch (err) {
-      setSnackbarMessage("Error al crear/actualizar campaña")
-      setSnackbarSeverity("error")
-      setOpenSnackbar(true)
+      setSnackbarMessage("Error al crear/actualizar campaña");
+      setSnackbarSeverity("error");
+      setOpenSnackbar(true);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleOutCampaignSubmit = async () => {
-    setLoading(true)
+    if (!validateOutCampaignFields()) {
+      setSnackbarMessage("Por favor, complete todos los campos obligatorios.");
+      setSnackbarSeverity("error");
+      setOpenSnackbar(true);
+      return;
+    }
+
+    setLoading(true);
     try {
-      const response = await fetch("/api/campaigns/out", {
+      console.log("Estado actual de outCampaignData:", outCampaignData);
+
+      const formatDate = (date) => {
+        if (!date) return null;
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, "0"); // Mes de 0 a 11
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      };
+
+      let startDate = formatDate(outCampaignData.dateRange.from);
+      let endDate = formatDate(outCampaignData.dateRange.to);
+
+      const bodyOut = {
+        states: outCampaignData.clientStates, // Array de estados de clientes seleccionados
+        start_date: startDate,
+        end_date: endDate,
+        type: outCampaignData.clientType, // Tipo de cliente (IN o OUT)
+        in_out: outCampaignData.considerPreviouslyContacted ? "True" : "False", // Boolean convertido a string
+        template_id: outCampaignData.selectedTemplate, // ID del template seleccionado
+        chunk_size: 20, // Número de registros por lote (ajustable según necesidades)
+      };
+      
+      const response = await fetch("https://pdcgrsx8x0.execute-api.us-east-2.amazonaws.com/lambdaA", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...outCampaignData,
-          tipo: "out", // Aseguramos que el tipo sea 'out'
-        }),
+        body: JSON.stringify({ bodyOut }),
       })
       if (!response.ok) throw new Error("Failed to create OUT campaign")
       const data = await response.json()
-      setCampaigns((prev) => [...prev, data])
-      handleCloseDialog()
-      setSnackbarMessage("Campaña OUT creada exitosamente")
-      setSnackbarSeverity("success")
-      setOpenSnackbar(true)
-      // Reiniciar el formulario
+    
+      console.log("Body out : ", bodyOut);
+      //setCampaigns((prev) => [...prev, data])
+      handleCloseDialog();
+      setSnackbarMessage("Campaña OUT creada exitosamente");
+      setSnackbarSeverity("success");
+      setOpenSnackbar(true);
       setOutCampaignData({
         nombre_campa_a: "",
         descripcion: "",
@@ -267,34 +358,57 @@ export default function CampaignManagement() {
         clientType: "in",
         considerPreviouslyContacted: false,
         selectedTemplate: "",
-        customDateRange: { start: null, end: null },
-      })
+        dateRange: { from: startOfDay(new Date()), to: endOfDay(new Date()) },
+      });
+      setSelectedPreset("Hoy");
     } catch (err) {
-      setSnackbarMessage("Error al crear campaña OUT")
-      setSnackbarSeverity("error")
-      setOpenSnackbar(true)
+      setSnackbarMessage("Error al crear campaña OUT");
+      setSnackbarSeverity("error");
+      setOpenSnackbar(true);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleCloseSnackbar = (event, reason) => {
     if (reason === "clickaway") {
-      return
+      return;
     }
-    setOpenSnackbar(false)
-  }
+    setOpenSnackbar(false);
+  };
 
   const handleCampaignTypeFilterChange = (event) => {
-    setCampaignTypeFilter(event.target.value)
-  }
+    setCampaignTypeFilter(event.target.value);
+    setPage(0);
+  };
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setPageSize(Number.parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const handleTemplatePreview = (template) => {
+    setSelectedTemplate(template);
+    setOpenTemplatePreviewDialog(true);
+  };
+
+  const handleDateFilterChange = (dateRange) => {
+    setOutCampaignData((prev) => ({
+      ...prev,
+      dateRange: dateRange,
+    }));
+  };
 
   if (loading && campaigns.length === 0) {
     return (
       <Container className="flex justify-center items-center h-screen">
         <CircularProgress />
       </Container>
-    )
+    );
   }
 
   if (error) {
@@ -302,7 +416,7 @@ export default function CampaignManagement() {
       <Container className="flex justify-center items-center h-screen">
         <Typography color="error">{error}</Typography>
       </Container>
-    )
+    );
   }
 
   return (
@@ -320,26 +434,32 @@ export default function CampaignManagement() {
           >
             Nueva campaña
           </Button>
-          <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={() => setAnchorEl(null)}
+          >
             <MenuItem
               onClick={() => {
-                handleOpenDialog("in")
-                setAnchorEl(null)
+                handleOpenDialog("in");
+                setAnchorEl(null);
               }}
             >
               Campaña IN
             </MenuItem>
             <MenuItem
               onClick={() => {
-                handleOpenDialog("out")
-                setAnchorEl(null)
+                handleOpenDialog("out");
+                setAnchorEl(null);
               }}
             >
               Campaña OUT
             </MenuItem>
           </Menu>
           <FormControl variant="outlined" style={{ minWidth: 120 }}>
-            <InputLabel id="campaign-type-filter-label">Tipo de Campaña</InputLabel>
+            <InputLabel id="campaign-type-filter-label">
+              Tipo de Campaña
+            </InputLabel>
             <Select
               labelId="campaign-type-filter-label"
               value={campaignTypeFilter}
@@ -373,13 +493,21 @@ export default function CampaignManagement() {
                   <TableCell>{campaign.campa_a_id}</TableCell>
                   <TableCell>{campaign.nombre_campa_a}</TableCell>
                   <TableCell>{campaign.descripcion}</TableCell>
-                  <TableCell>{new Date(campaign.fecha_creacion).toLocaleString()}</TableCell>
+                  <TableCell>
+                    {new Date(campaign.fecha_creacion).toLocaleString()}
+                  </TableCell>
                   <TableCell>{campaign.estado_campa_a}</TableCell>
                   <TableCell>{campaign.tipo}</TableCell>
                   <TableCell>
-                    {campaign.fecha_inicio ? new Date(campaign.fecha_inicio).toLocaleString() : "N/A"}
+                    {campaign.fecha_inicio
+                      ? new Date(campaign.fecha_inicio).toLocaleString()
+                      : "N/A"}
                   </TableCell>
-                  <TableCell>{campaign.fecha_fin ? new Date(campaign.fecha_fin).toLocaleString() : "N/A"}</TableCell>
+                  <TableCell>
+                    {campaign.fecha_fin
+                      ? new Date(campaign.fecha_fin).toLocaleString()
+                      : "N/A"}
+                  </TableCell>
                   <TableCell>
                     <Button onClick={() => handleEditDialog(campaign)}>
                       <EditIcon />
@@ -393,6 +521,14 @@ export default function CampaignManagement() {
             </TableBody>
           </Table>
         </TableContainer>
+        <TablePagination
+          component="div"
+          count={totalCount}
+          page={page}
+          onPageChange={handleChangePage}
+          rowsPerPage={pageSize}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
 
         <Dialog open={openDialog} onClose={handleCloseDialog}>
           <DialogTitle>
@@ -489,21 +625,36 @@ export default function CampaignManagement() {
                 value={newCampaign.fecha_fin}
                 onChange={handleDateChange("fecha_fin")}
                 disabled={dialogMode === "view"}
-                renderInput={(params) => <TextField {...params} fullWidth disabled={dialogMode === "view"} />}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    fullWidth
+                    disabled={dialogMode === "view"}
+                  />
+                )}
               />
             </form>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseDialog}>Cerrar</Button>
             {dialogMode !== "view" && (
-              <Button onClick={handleSubmit} variant="contained" color="primary">
+              <Button
+                onClick={handleSubmit}
+                variant="contained"
+                color="primary"
+              >
                 {dialogMode === "create" ? "Crear" : "Guardar"}
               </Button>
             )}
           </DialogActions>
         </Dialog>
 
-        <Dialog open={openOutCampaignDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
+        <Dialog
+          open={openOutCampaignDialog}
+          onClose={handleCloseDialog}
+          maxWidth="md"
+          fullWidth
+        >
           <DialogTitle>Crear Campaña OUT</DialogTitle>
           <DialogContent>
             <TextField
@@ -515,8 +666,15 @@ export default function CampaignManagement() {
               fullWidth
               variant="outlined"
               value={outCampaignData.nombre_campa_a}
-              onChange={(e) => setOutCampaignData({ ...outCampaignData, nombre_campa_a: e.target.value })}
+              onChange={(e) =>
+                setOutCampaignData({
+                  ...outCampaignData,
+                  nombre_campa_a: e.target.value,
+                })
+              }
               required
+              error={!!errors.nombre_campa_a}
+              helperText={errors.nombre_campa_a}
             />
             <TextField
               margin="dense"
@@ -528,75 +686,74 @@ export default function CampaignManagement() {
               multiline
               rows={3}
               value={outCampaignData.descripcion}
-              onChange={(e) => setOutCampaignData({ ...outCampaignData, descripcion: e.target.value })}
+              onChange={(e) =>
+                setOutCampaignData({
+                  ...outCampaignData,
+                  descripcion: e.target.value,
+                })
+              }
+              error={!!errors.descripcion}
+              helperText={errors.descripcion}
             />
-            <FormControl fullWidth margin="normal">
+            <FormControl
+              fullWidth
+              margin="normal"
+              error={!!errors.clientStates}
+            >
               <InputLabel>Estados de clientes</InputLabel>
               <Select
                 multiple
                 value={outCampaignData.clientStates}
-                onChange={(e) => setOutCampaignData({ ...outCampaignData, clientStates: e.target.value })}
-                renderValue={(selected) => selected.map((state) => stateMapping[state].text).join(", ")}
+                onChange={(e) =>
+                  setOutCampaignData({
+                    ...outCampaignData,
+                    clientStates: e.target.value,
+                  })
+                }
+                renderValue={(selected) =>
+                  selected.map((state) => stateMapping[state].text).join(", ")
+                }
               >
                 {Object.keys(stateMapping).map((state) => (
                   <MenuItem key={state} value={state}>
-                    <Checkbox checked={outCampaignData.clientStates.indexOf(state) > -1} />
+                    <Checkbox
+                      checked={outCampaignData.clientStates.indexOf(state) > -1}
+                    />
                     {stateMapping[state].text}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
+            <DateFilterv2
+              onDateChange={handleDateFilterChange}
+              reset={resetFilters}
+              setStartDate={setStartDate}
+              setEndDate={setEndDate}
+              setSelectedPreset={setSelectedPreset}
+              startDate={startDate}
+              endDate={endDate}
+              selectedPreset={selectedPreset}
+              TodoExist={false}
+              size="medium"
+            />
 
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Rango de tiempo</InputLabel>
-              <Select
-                value={outCampaignData.timeRange}
-                onChange={(e) => setOutCampaignData({ ...outCampaignData, timeRange: e.target.value })}
-              >
-                <MenuItem value="today">Hoy</MenuItem>
-                <MenuItem value="yesterday">Ayer</MenuItem>
-                <MenuItem value="lastWeek">Última semana</MenuItem>
-                <MenuItem value="lastMonth">Último mes</MenuItem>
-                <MenuItem value="custom">Rango específico</MenuItem>
-              </Select>
-            </FormControl>
-
-            {outCampaignData.timeRange === "custom" && (
-              <div className="flex gap-4 mt-4">
-                <DatePicker
-                  label="Fecha inicio"
-                  value={outCampaignData.customDateRange.start}
-                  onChange={(date) =>
-                    setOutCampaignData({
-                      ...outCampaignData,
-                      customDateRange: { ...outCampaignData.customDateRange, start: date },
-                    })
-                  }
-                  renderInput={(params) => <TextField {...params} fullWidth />}
-                />
-                <DatePicker
-                  label="Fecha fin"
-                  value={outCampaignData.customDateRange.end}
-                  onChange={(date) =>
-                    setOutCampaignData({
-                      ...outCampaignData,
-                      customDateRange: { ...outCampaignData.customDateRange, end: date },
-                    })
-                  }
-                  renderInput={(params) => <TextField {...params} fullWidth />}
-                />
-              </div>
-            )}
-
-            <FormControl fullWidth margin="normal">
+            <FormControl fullWidth margin="normal" error={!!errors.clientType}>
               <InputLabel>Tipo de clientes</InputLabel>
               <Select
                 value={outCampaignData.clientType}
-                onChange={(e) => setOutCampaignData({ ...outCampaignData, clientType: e.target.value })}
+                onChange={(e) =>
+                  setOutCampaignData({
+                    ...outCampaignData,
+                    clientType: e.target.value,
+                  })
+                }
               >
                 <MenuItem value="in">IN</MenuItem>
                 <MenuItem value="out">OUT</MenuItem>
               </Select>
+              {errors.clientType && (
+                <Typography color="error">{errors.clientType}</Typography>
+              )}
             </FormControl>
 
             <FormControlLabel
@@ -604,42 +761,104 @@ export default function CampaignManagement() {
                 <Checkbox
                   checked={outCampaignData.considerPreviouslyContacted}
                   onChange={(e) =>
-                    setOutCampaignData({ ...outCampaignData, considerPreviouslyContacted: e.target.checked })
+                    setOutCampaignData({
+                      ...outCampaignData,
+                      considerPreviouslyContacted: e.target.checked,
+                    })
                   }
                 />
               }
               label="Considerar clientes previamente contactados"
             />
 
-            <FormControl fullWidth margin="normal">
+            <FormControl
+              fullWidth
+              margin="normal"
+              error={!!errors.selectedTemplate}
+            >
               <InputLabel>Template</InputLabel>
               <Select
                 value={outCampaignData.selectedTemplate}
-                onChange={(e) => setOutCampaignData({ ...outCampaignData, selectedTemplate: e.target.value })}
+                onChange={(e) =>
+                  setOutCampaignData({
+                    ...outCampaignData,
+                    selectedTemplate: e.target.value,
+                  })
+                }
               >
                 {templates.map((template) => (
                   <MenuItem key={template.id} value={template.id}>
-                    {template.name}
+                    {template.nombre_template}
+                    <IconButton
+                      size="small"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleTemplatePreview(template);
+                      }}
+                    >
+                      <InfoIcon />
+                    </IconButton>
                   </MenuItem>
                 ))}
               </Select>
+              {errors.selectedTemplate && (
+                <Typography color="error">{errors.selectedTemplate}</Typography>
+              )}
             </FormControl>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseDialog}>Cancelar</Button>
-            <Button onClick={handleOutCampaignSubmit} variant="contained" color="primary" disabled={loading}>
-              {loading ? <CircularProgress size={24} /> : "Crear/Enviar"}
+            <Button
+              onClick={handleOutCampaignSubmit}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? <CircularProgress size={24} /> : "Enviar"}
             </Button>
           </DialogActions>
         </Dialog>
 
-        <Snackbar open={openSnackbar} autoHideDuration={6000} onClose={handleCloseSnackbar}>
-          <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: "100%" }}>
+        <Dialog
+          open={openTemplatePreviewDialog}
+          onClose={() => setOpenTemplatePreviewDialog(false)}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle>Vista previa del template</DialogTitle>
+          <DialogContent>
+            {selectedTemplate && (
+              <>
+                <Typography variant="h6">
+                  {selectedTemplate.nombre_template}
+                </Typography>
+                <Typography variant="body1">
+                  {selectedTemplate.mensaje}
+                </Typography>
+              </>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenTemplatePreviewDialog(false)}>
+              Cerrar
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Snackbar
+          open={openSnackbar}
+          autoHideDuration={6000}
+          onClose={handleCloseSnackbar}
+        >
+          <Alert
+            onClose={handleCloseSnackbar}
+            severity={snackbarSeverity}
+            sx={{ width: "100%" }}
+          >
             {snackbarMessage}
           </Alert>
         </Snackbar>
       </Container>
     </LocalizationProvider>
-  )
+  );
 }
-
