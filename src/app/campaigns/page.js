@@ -343,7 +343,9 @@ export default function CampaignManagement() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bodyOut),
       })
-      if (!response.ok) throw new Error("Failed to create OUT campaign")
+      if (!response.ok) { // ✅ Si el statusCode no es 200, mostrar error
+        throw new Error(data.message );
+      }
       const data = await response.json()
     
       console.log("Body out : ", bodyOut);
