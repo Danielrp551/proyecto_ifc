@@ -341,7 +341,7 @@ export default function CampaignManagement() {
       const response = await fetch("https://pdcgrsx8x0.execute-api.us-east-2.amazonaws.com/lambdaA", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bodyOut }),
+        body: JSON.stringify(bodyOut),
       })
       if (!response.ok) throw new Error("Failed to create OUT campaign")
       const data = await response.json()
