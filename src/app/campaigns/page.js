@@ -334,6 +334,8 @@ export default function CampaignManagement() {
         in_out: outCampaignData.considerPreviouslyContacted ? "True" : "False", // Boolean convertido a string
         template_id: outCampaignData.selectedTemplate, // ID del template seleccionado
         chunk_size: 20, // Número de registros por lote (ajustable según necesidades)
+        nombre_campania: outCampaignData.nombre_campa_a,
+        descripcion_campania: outCampaignData.descripcion,
       };
       
       const response = await fetch("https://pdcgrsx8x0.execute-api.us-east-2.amazonaws.com/lambdaA", {
