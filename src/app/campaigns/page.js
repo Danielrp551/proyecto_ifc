@@ -719,7 +719,9 @@ export default function CampaignManagement() {
                   selected.map((state) => stateMapping[state].text).join(", ")
                 }
               >
-                {Object.keys(stateMapping).map((state) => (
+                {Object.keys(stateMapping)
+                .filter((state) => !["activo", "default","nuevo"].includes(state))
+                .map((state) => (
                   <MenuItem key={state} value={state}>
                     <Checkbox
                       checked={outCampaignData.clientStates.indexOf(state) > -1}
