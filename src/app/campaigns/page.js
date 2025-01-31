@@ -343,11 +343,11 @@ export default function CampaignManagement() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bodyOut),
       })
+      const data = await response.json()
       if (!response.ok) { // ✅ Si el statusCode no es 200, mostrar error
         throw new Error(data.message );
-      }
-      const data = await response.json()
-    
+      }    
+
       console.log("Body out : ", bodyOut);
       //setCampaigns((prev) => [...prev, data])
       handleCloseDialog();
@@ -366,10 +366,10 @@ export default function CampaignManagement() {
       });
       setSelectedPreset("Hoy");
     } catch (err) {
-
-      setSnackbarMessage(err.message || "Error al crear campaña OUT");
-      setSnackbarSeverity("error");
-      setOpenSnackbar(true);
+        console.error("Error en handleOutCampaignSubmit:", err);
+        setSnackbarMessage(err.message || "Error al crear campaña OUT");
+        setSnackbarSeverity("error");
+        setOpenSnackbar(true);
     } finally {
       setLoading(false);
     }
