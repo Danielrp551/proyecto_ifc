@@ -98,6 +98,7 @@ export async function GET(request) {
         acciones: true,
         estado: true,
         observaciones: true,
+        score: true,
       },
     });
 

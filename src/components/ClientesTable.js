@@ -193,6 +193,7 @@ const [selectedTime, setSelectedTime] = useState(null);
     { field: "nombreCompleto", headerName: "Nombre", flex: 1, minWidth: 150 },
     { field: "celular", headerName: "Teléfono", flex: 1, minWidth: 120 },
     { field: "estado", headerName: "Estado", flex: 1, minWidth: 100 },
+    { field: "score", headerName: "Score", flex: 1, minWidth: 100 },
     { field: "bound", headerName: "Bound", flex: 1, minWidth: 100 },
     { field: "gestor", headerName: "Gestor", flex: 1, minWidth: 100 },
     {
@@ -220,6 +221,7 @@ const [selectedTime, setSelectedTime] = useState(null);
     observaciones: cliente.observaciones || "",
     gestor: cliente.gestor !== "" ? cliente.gestor : " - ",
     acciones: cliente.acciones,
+    score: cliente.score,
   }));
 
   const handleSelectionChange = (newSelection) => {

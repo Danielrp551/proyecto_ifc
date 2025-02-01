@@ -551,6 +551,7 @@ const GestoresPage = () => {
                   <TableCell>Nombre</TableCell>
                   <TableCell>Teléfono</TableCell>
                   <TableCell>Estado</TableCell>
+                  <TableCell>Score</TableCell>
                   <TableCell>Acción</TableCell>
                   <TableCell>Gestor</TableCell>
                   <TableCell>Acciones</TableCell>
@@ -584,6 +585,7 @@ const GestoresPage = () => {
                             }}
                           />
                         </TableCell>
+                        <TableCell>{cliente.score}</TableCell>
                         <TableCell>
                           <Chip
                             label={actionInfo.text}

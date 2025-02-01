@@ -76,11 +76,13 @@ model clientes {
   gestor                       String?                @default("") @db.VarChar(100)
   acciones                     String?                @default("") @db.VarChar(50)
   in_out                       Boolean?               @default(false)
+  score                        String                 @default("no_score") @db.VarChar(20)
   acciones_comerciales         acciones_comerciales[]
   citas                        citas[]
   cliente_campa_a              cliente_campa_a[]
   conversaciones               conversaciones[]
   historico                    historico[]
+  historico_score              historico_score[]
   leads                        leads[]
   pagos                        pagos[]
 }
@@ -203,4 +205,14 @@ model templates {
   template_content_sid String     @default("") @db.VarChar(120)
   parametro            Boolean    @default(false)
   campa_as             campa_as[]
+}
+
+model historico_score {
+  historico_score_id Int       @id @default(autoincrement())
+  cliente_id         Int
+  score              String    @db.VarChar(20)
+  fecha_cambio       DateTime? @default(now()) @db.DateTime(0)
+  clientes           clientes  @relation(fields: [cliente_id], references: [cliente_id], onDelete: Cascade, onUpdate: NoAction, map: "historico_score_ibfk_1")
+
+  @@index([cliente_id], map: "cliente_id")
 }

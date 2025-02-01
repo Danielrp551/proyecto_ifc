@@ -82,6 +82,9 @@ export default function ClientsManagement() {
   const [conversationLoading, setConversationLoading] = useState(false);
   const [conversationData, setConversationData] = useState(null);
   const [selectedConversation, setSelectedConversation] = useState(0);
+  const [commercialActionLoading, setCommercialActionLoading] = useState(false);
+    const [selectedDate, setSelectedDate] = useState("");
+    const [selectedTime, setSelectedTime] = useState("");
 
   const router = useRouter();
 
@@ -215,6 +218,7 @@ export default function ClientsManagement() {
       nombreCompleto: selectedClient.nombre + " " + selectedClient.apellido,
     });
     setOpenDialog(true);
+    fetchCommercialAction(selectedClient.cliente_id);
     handleMenuClose();
     console.log("Acción Comercial de:", selectedClient);
   };
@@ -260,12 +264,12 @@ export default function ClientsManagement() {
         fechaCita:
           editedData.acciones === "cita_agendada" ||
           editedData.acciones === "promesa_de_pago"
-            ? editedData.fechaCita
+            ? selectedDate
             : null,
         horaCita:
           editedData.acciones === "cita_agendada" ||
           editedData.acciones === "promesa_de_pago"
-            ? editedData.horaCita
+            ? selectedTime
             : null,
       });
       console.log("Body guardar:", body);
@@ -302,7 +306,7 @@ export default function ClientsManagement() {
     if (
       (editedData.acciones === "cita_agendada" ||
         editedData.acciones === "promesa_de_pago") &&
-      (!editedData.fechaCita || !editedData.horaCita)
+        (!selectedDate || !selectedTime)
     ) {
       setSnackbarMessage("La fecha y hora de la cita son obligatorias");
       setSnackbarSeverity("error");
@@ -344,6 +348,53 @@ export default function ClientsManagement() {
       ...prev,
       [field]: value,
     }));
+  };
+
+  const fetchCommercialAction = async (clientId) => {
+    setCommercialActionLoading(true);
+    try {
+      const response = await fetch(`/api/clients/citas/${clientId}`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.log("No hay citas agendadas o confirmadas para este cliente.");
+          setSelectedDate("");
+          setSelectedTime("");
+          setEditedData({
+            ...selectedClient,
+            nombreCompleto: `${selectedClient.nombre} ${selectedClient.apellido}`.trim(),
+          });
+          return;
+        }
+        throw new Error("Error al cargar la acción comercial");
+      }
+  
+      const data = await response.json();
+      console.log("Datos Acción Comercial:", data);
+  
+      if (data && data.fecha_cita) {
+        const citaDate = new Date(data.fecha_cita);
+        const formattedDate = citaDate.toISOString().split("T")[0]; // YYYY-MM-DD
+        const formattedTime = citaDate.toISOString().split("T")[1].substring(0, 5); // HH:MM
+        setSelectedDate(formattedDate);
+        setSelectedTime(formattedTime);
+      } else {
+        setSelectedDate("");
+        setSelectedTime("");
+      }
+  
+      // Luego asigna los datos del cliente en editedData
+      setEditedData({
+        ...selectedClient,
+        nombreCompleto: `${selectedClient.nombre} ${selectedClient.apellido}`.trim(),
+      });
+    } catch (error) {
+      console.error("Error fetching commercial action:", error);
+      setSnackbarMessage("Error al cargar la acción comercial");
+      setSnackbarSeverity("error");
+      setOpenSnackbar(true);
+    } finally {
+      setCommercialActionLoading(false);
+    }
   };
 
   return (
@@ -497,6 +548,7 @@ export default function ClientsManagement() {
                   <TableCell>Nombre</TableCell>
                   <TableCell>Celular</TableCell>
                   <TableCell>Estado</TableCell>
+                  <TableCell>Score</TableCell>
                   <TableCell>Bound</TableCell>
                   <TableCell>Gestor</TableCell>
                   <TableCell>Acciones</TableCell>
@@ -515,6 +567,7 @@ export default function ClientsManagement() {
                     <TableCell>{client.nombre}</TableCell>
                     <TableCell>{client.celular}</TableCell>
                     <TableCell>{getStateInfo(client.estado).text}</TableCell>
+                    <TableCell>{client.score}</TableCell>
                     <TableCell>
                       {client.bound === true ? "IN" : "OUT"}
                     </TableCell>
@@ -579,7 +632,19 @@ export default function ClientsManagement() {
       >
         <DialogTitle>{dialogTitle}</DialogTitle>
         <DialogContent>
-          {editedData && (
+        {commercialActionLoading ? (
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: 150,
+      }}
+    >
+      <CircularProgress />
+    </Box>
+  ) : (
+          editedData && (
             <>
               <TextField
                 fullWidth
@@ -672,10 +737,8 @@ export default function ClientsManagement() {
                     InputLabelProps={{
                       shrink: true,
                     }}
-                    value={editedData.fechaCita || ""}
-                    onChange={(e) =>
-                      handleInputChangeModal("fechaCita", e.target.value)
-                    }
+                    value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
                   />
                   <TextField
                     fullWidth
@@ -685,19 +748,19 @@ export default function ClientsManagement() {
                     InputLabelProps={{
                       shrink: true,
                     }}
-                    value={editedData.horaCita || ""}
-                    onChange={(e) =>
-                      handleInputChangeModal("horaCita", e.target.value)
-                    }
+                    value={selectedTime}
+                      onChange={(e) => setSelectedTime(e.target.value)}
+                    
                   />
                 </>
               )}
             </>
-          )}
+          )
+        )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDialogClose}>Cerrar</Button>
-          <Button onClick={handleSave} variant="contained" color="primary">
+          <Button onClick={handleSave} variant="contained" color="primary" disabled={commercialActionLoading}>
             Guardar
           </Button>
         </DialogActions>
