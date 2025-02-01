@@ -35,6 +35,7 @@ import {
     List,
     ListItem,
     ListItemText,
+    Chip,
 } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import { useRouter } from "next/navigation";
@@ -45,6 +46,7 @@ import { DateFilterv2 } from "@/components/date-filter_v2";
 import { getStateInfo } from "@/app/utils/stateMapping";
 import { endOfDay, startOfDay, differenceInHours } from "date-fns";
 import { useSession } from "next-auth/react";
+import { getScoreInfo } from "../utils/scoreMapping";
 
 export default function ClientsManagement() {
   const [clients, setClients] = useState([]);
@@ -566,8 +568,26 @@ export default function ClientsManagement() {
                   >
                     <TableCell>{client.nombre}</TableCell>
                     <TableCell>{client.celular}</TableCell>
-                    <TableCell>{getStateInfo(client.estado).text}</TableCell>
-                    <TableCell>{client.score}</TableCell>
+                    <TableCell>
+                    <Chip
+                            label={getStateInfo(client.estado).text}
+                            sx={{
+                              backgroundColor: getStateInfo(client.estado).color,
+                              color: getStateInfo(client.estado).textColor,
+                              fontWeight: "medium",
+                            }}
+                          />
+                    </TableCell>
+                    <TableCell>
+                    <Chip
+                            label={getScoreInfo(client.score).text}
+                            sx={{
+                              backgroundColor: getScoreInfo(client.score).color,
+                              color: getScoreInfo(client.score).textColor,
+                              fontWeight: "medium",
+                            }}
+                          />
+                    </TableCell>
                     <TableCell>
                       {client.bound === true ? "IN" : "OUT"}
                     </TableCell>
@@ -575,16 +595,6 @@ export default function ClientsManagement() {
                       {client.gestor !== "" ? client.gestor : " - "}
                     </TableCell>
                     <TableCell>
-                      {/*
-                      <Button
-                        onClick={() => handleViewDetails(client.cliente_id)}
-                        startIcon={<InfoIcon />}
-                        variant="outlined"
-                        color="primary"
-                      >
-                        Detalles
-                      </Button>
-                      */}
                       <IconButton
                         size="small"
                         onClick={(e) => handleMenuOpen(e, client)}

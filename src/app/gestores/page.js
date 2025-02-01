@@ -40,6 +40,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { getActionInfo } from "@/app/utils/actionMapping";
 import { getStateInfo } from "@/app/utils/stateMapping";
+import { getScoreInfo } from "../utils/scoreMapping";
 import { DateFilterv2 } from "@/components/date-filter_v2";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -562,6 +563,7 @@ const GestoresPage = () => {
                   clientes.map((cliente) => {
                     const actionInfo = getActionInfo(cliente.acciones);
                     const stateInfo = getStateInfo(cliente.estado);
+                    const scoreInfo = getScoreInfo(cliente.score);
                     return (
                       <TableRow
                         key={cliente.cliente_id}
@@ -585,7 +587,16 @@ const GestoresPage = () => {
                             }}
                           />
                         </TableCell>
-                        <TableCell>{cliente.score}</TableCell>
+                        <TableCell>
+                        <Chip
+                            label={scoreInfo.text}
+                            sx={{
+                              backgroundColor: scoreInfo.color,
+                              color: scoreInfo.textColor,
+                              fontWeight: "medium",
+                            }}
+                          />
+                        </TableCell>
                         <TableCell>
                           <Chip
                             label={actionInfo.text}

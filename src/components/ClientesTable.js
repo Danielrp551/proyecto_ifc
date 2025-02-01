@@ -25,11 +25,13 @@ import {
   List,
   ListItem,
   ListItemText,
+  Chip,
 } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useRouter } from "next/navigation";
 import { getStateInfo } from "@/app/utils/stateMapping";
 import { set } from "date-fns";
+import { getScoreInfo } from "@/app/utils/scoreMapping";
 
 export default function ClientesTable({
   data,
@@ -192,8 +194,30 @@ const [selectedTime, setSelectedTime] = useState(null);
   const columns = [
     { field: "nombreCompleto", headerName: "Nombre", flex: 1, minWidth: 150 },
     { field: "celular", headerName: "Teléfono", flex: 1, minWidth: 120 },
-    { field: "estado", headerName: "Estado", flex: 1, minWidth: 100 },
-    { field: "score", headerName: "Score", flex: 1, minWidth: 100 },
+    { field: "estado", headerName: "Estado", flex: 1, minWidth: 100,
+      renderCell: (params) => (
+        <Chip
+        label={getStateInfo(params.row.estado).text}
+        sx={{
+          backgroundColor: getStateInfo(params.row.estado).color,
+          color: getStateInfo(params.row.estado).textColor,
+          fontWeight: "medium",
+        }}
+      />
+      )
+     },
+    { field: "score", headerName: "Score", flex: 1, minWidth: 100,
+      renderCell: (params) => (
+        <Chip
+        label={getScoreInfo(params.row.score).text}
+        sx={{
+          backgroundColor: getScoreInfo(params.row.score).color,
+          color: getScoreInfo(params.row.score).textColor,
+          fontWeight: "medium",
+        }}
+      />
+      )
+     },
     { field: "bound", headerName: "Bound", flex: 1, minWidth: 100 },
     { field: "gestor", headerName: "Gestor", flex: 1, minWidth: 100 },
     {
@@ -214,7 +238,7 @@ const [selectedTime, setSelectedTime] = useState(null);
     nombreCompleto: `${cliente.nombre} ${cliente.apellido || ""}`.trim(),
     email: cliente.email || "",
     celular: cliente.celular,
-    estado: getStateInfo(cliente.estado).text,
+    estado: cliente.estado,
     bound: cliente.bound === true ? "INBOUND" : "OUTBOUND",
     fecha_creacion: cliente.fecha_creacion,
     fecha_ultima_interaccion: cliente.fecha_ultima_interaccion,
