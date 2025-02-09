@@ -171,7 +171,7 @@ export async function PUT(req, { params }) {
         if (body.acciones === "cita_agendada")
           estado_cliente = "cita agendada"
         else
-          estado_cliente = "promesa de pago"
+          estado_cliente = "promesas de pago"
         // actualizar cliente
         await prisma.clientes.update({
           where: { cliente_id: parseInt(id) },
