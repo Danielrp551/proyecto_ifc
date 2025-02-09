@@ -166,6 +166,19 @@ export async function PUT(req, { params }) {
         await createEvent(calendarService, motivoCita, body.fechaCita, body.horaCita);
 
         console.log("Nueva cita creada:", nuevaCita);
+
+        let estado_cliente = ""
+        if (body.acciones === "cita_agendada")
+          estado_cliente = "cita agendada"
+        else
+          estado_cliente = "promesa de pago"
+        // actualizar cliente
+        await prisma.clientes.update({
+          where: { cliente_id: parseInt(id) },
+          data: {
+            estado : estado_cliente
+          },
+        });
       }
 
     // Registra la acción comercial
