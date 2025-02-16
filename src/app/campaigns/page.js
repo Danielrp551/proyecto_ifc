@@ -336,7 +336,7 @@ export default function CampaignManagement() {
 
       let startDate = formatDate(outCampaignData.dateRange.from);
       let endDate = formatDate(outCampaignData.dateRange.to);
-      let activationDate = formatDate(outCampaignData.activationType);
+      let activationDate = formatDate(outCampaignData.activationDate);
 
       const bodyOut = {
         states: outCampaignData.clientStates, // Array de estados de clientes seleccionados
@@ -381,6 +381,8 @@ export default function CampaignManagement() {
         considerPreviouslyContacted: false,
         selectedTemplate: "",
         dateRange: { from: startOfDay(new Date()), to: endOfDay(new Date()) },
+        activationType: "now",
+        activationDate: startOfDay(new Date()),
       });
       setSelectedPreset("Hoy");
     } catch (err) {
