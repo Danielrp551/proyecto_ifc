@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, act } from "react";
 import {
   Container,
   Typography,
@@ -41,6 +41,8 @@ import InfoIcon from "@mui/icons-material/Info";
 import { stateMapping } from "../utils/stateMapping";
 import { DateFilterv2 } from "@/components/date-filter_v2";
 import { endOfDay, startOfDay } from "date-fns";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 export default function CampaignManagement() {
   const [campaigns, setCampaigns] = useState([]);
@@ -87,6 +89,8 @@ export default function CampaignManagement() {
     considerPreviouslyContacted: false,
     selectedTemplate: "",
     dateRange: { from: startOfDay(new Date()), to: endOfDay(new Date()) },
+    activationType: "now",
+    activationDate: startOfDay(new Date()),
   });
 
   const [templates, setTemplates] = useState([]);
@@ -172,6 +176,12 @@ export default function CampaignManagement() {
     }
     if (!outCampaignData.selectedTemplate) {
       newErrors.selectedTemplate = "Selecciona un template";
+    }
+    if(!outCampaignData.activationType){
+      newErrors.activationType = "Selecciona una fecha de activación";
+    }
+    if(!outCampaignData.activationDate){
+      newErrors.activationDate = "Selecciona una fecha de activación";
     }
 
     setErrors(newErrors);
@@ -325,6 +335,7 @@ export default function CampaignManagement() {
 
       let startDate = formatDate(outCampaignData.dateRange.from);
       let endDate = formatDate(outCampaignData.dateRange.to);
+      let activationDate = formatDate(outCampaignData.activationType);
 
       const bodyOut = {
         states: outCampaignData.clientStates, // Array de estados de clientes seleccionados
@@ -336,6 +347,8 @@ export default function CampaignManagement() {
         chunk_size: 20, // Número de registros por lote (ajustable según necesidades)
         nombre_campania: outCampaignData.nombre_campa_a,
         descripcion_campania: outCampaignData.descripcion,
+        activation_type: outCampaignData.activationType,
+        activation_date: activationDate,
       };
 
       const response = await fetch(
@@ -820,6 +833,38 @@ export default function CampaignManagement() {
                 <Typography color="error">{errors.selectedTemplate}</Typography>
               )}
             </FormControl>
+            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              <FormControl style={{ minWidth: 150 }}>
+                <InputLabel>Fecha de activación</InputLabel>
+                <Select
+                  value={outCampaignData.activationType || "now"}
+                  onChange={(e) => {
+                    const selectedType = e.target.value;
+                    setOutCampaignData({
+                      ...outCampaignData,
+                      activationType: selectedType,
+                      activationDate: selectedType === "now" ? startOfDay(new Date()) : null,
+                    });
+                  }}
+                >
+                  <MenuItem value="now">Ahora</MenuItem>
+                  <MenuItem value="custom">Seleccionar fecha</MenuItem>
+                </Select>
+              </FormControl>
+
+              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
+                <DatePicker
+                  label="Fecha de activación"
+                  value={outCampaignData.activationDate}
+                  onChange={(date) =>
+                    setOutCampaignData({ ...outCampaignData, activationDate: date })
+                  }
+                  disabled={outCampaignData.activationType === "now"}
+                  inputFormat="dd/MM/yyyy"
+                  renderInput={(params) => <TextField {...params} fullWidth />}
+                />
+              </LocalizationProvider>
+            </div>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseDialog}>Cancelar</Button>
