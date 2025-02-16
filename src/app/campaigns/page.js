@@ -75,6 +75,7 @@ export default function CampaignManagement() {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
+  const [refresh, setRefresh] = useState(false);
 
   const [selectedPreset, setSelectedPreset] = useState("Hoy");
   const [startDate, setStartDate] = useState(startOfDay(new Date()));
@@ -97,7 +98,7 @@ export default function CampaignManagement() {
 
   useEffect(() => {
     fetchCampaigns();
-  }, [campaignTypeFilter, page, pageSize]); //This line was flagged as needing fewer dependencies
+  }, [campaignTypeFilter, page, pageSize,refresh]); //This line was flagged as needing fewer dependencies
 
   useEffect(() => {
     fetchTemplates();
@@ -389,6 +390,7 @@ export default function CampaignManagement() {
       setOpenSnackbar(true);
     } finally {
       setLoading(false);
+      setRefresh(!refresh);
     }
   };
 
@@ -498,7 +500,7 @@ export default function CampaignManagement() {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>ID</TableCell>
+                
                 <TableCell>Nombre</TableCell>
                 <TableCell>Descripción</TableCell>
                 <TableCell>Fecha creación</TableCell>
@@ -512,7 +514,7 @@ export default function CampaignManagement() {
             <TableBody>
               {campaigns.map((campaign) => (
                 <TableRow key={campaign.campa_a_id}>
-                  <TableCell>{campaign.campa_a_id}</TableCell>
+                  
                   <TableCell>{campaign.nombre_campa_a}</TableCell>
                   <TableCell>{campaign.descripcion}</TableCell>
                   <TableCell>
