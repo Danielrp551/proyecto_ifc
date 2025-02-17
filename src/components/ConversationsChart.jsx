@@ -15,6 +15,8 @@ import {
   Snackbar,
   Alert,
   Grid,
+  Switch,
+  FormControlLabel,
 } from "@mui/material";
 import {
   BarChart,
@@ -38,6 +40,11 @@ export default function ConversationsChart() {
   const [data, setData] = useState([]);
   const [resumen, setResumen] = useState({});
   const [totalConversaciones, setTotalConversaciones] = useState(0);
+  const [nuevasConversaciones, setNuevasConversaciones] = useState([]);
+  const [resumenNuevasConversaciones, setResumenNuevasConversaciones] = useState({});
+  const [totalConversacionesNuevas, setTotalConversacionesNuevas] = useState(0);
+  const [mostrarNuevas, setMostrarNuevas] = useState(false);
+
 
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
@@ -147,6 +154,50 @@ export default function ConversationsChart() {
     fetchGestores();
   }, []);
 
+  useEffect(() => {
+    const fetchNuevasConversaciones = async () => {
+      setLoading(true);
+      try {
+        const estado = filtros.estado ? `&estado=${filtros.estado}` : "";
+        const gestor = filtros.gestor ? `&asesor=${filtros.gestor}` : "";
+        const accion = filtros.accion ? `&accion=${filtros.accion}` : "";
+        const dateRange =
+        filtros.dateRange.from && filtros.dateRange.to
+          ? `&fechaInicio=${filtros.dateRange.from.toISOString()}&fechaFin=${filtros.dateRange.to.toISOString()}`
+          : "";
+        const response = await fetch(
+          `/api/dashboard/nuevas-conversaciones?${dateRange}${estado}${gestor}${accion}`
+        );
+        const data = await response.json();
+        console.log("data nuevas conversaciones: ", data);
+        const cantidadHoras = differenceInHours(
+          filtros.dateRange.to,
+          filtros.dateRange.from
+        );
+        const gastos =
+          data.totalInteracciones * 0.0192 + cantidadHoras * (0.0464 + 0.017);
+        setNuevasConversaciones(data.conversacionesPorFecha);
+        setResumenNuevasConversaciones({
+          conversacionesGestionadas: data.conversacionesGestionadas,
+          conversacionesPorEstado: data.conversacionesPorEstado,
+          conversacionesCitaAgendadaAccion: data.numCitaAgendada,
+          totalInteracciones: data.totalInteracciones,
+          gastosAprox: gastos,
+        });
+        setTotalConversacionesNuevas(data.totalConversaciones);
+      } catch (err) {
+        setError("No se pudieron cargar los datos de las nuevas conversaciones");
+        setSnackbarMessage("Error al cargar información de las nuevas conversaciones");
+        setSnackbarSeverity("error");
+        setOpenSnackbar(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNuevasConversaciones();  
+  }, [filtros]);
+
   const handleCloseSnackbar = () => setOpenSnackbar(false);
 
   const handleDateChange = (dateRange) => {
@@ -164,13 +215,16 @@ export default function ConversationsChart() {
     }));
   };
 
+  const resumenActual = mostrarNuevas ? resumenNuevasConversaciones : resumen;
+  const totalConversacionesActual = mostrarNuevas ? totalConversacionesNuevas : totalConversaciones;
+
   return (
     <Box className="flex gap-4">
       {/* Panel de resumen */}
       <Card className="w-1/4 bg-white shadow-md">
         <CardContent>
           <Typography variant="h6" className="mb-4">
-            Resumen de Conversaciones
+             {mostrarNuevas ? "Resumen de Nuevas Conversaciones" : "Resumen de Conversaciones"}
           </Typography>
           {loading ? (
             <>
@@ -185,8 +239,18 @@ export default function ConversationsChart() {
             <Typography color="error">{error}</Typography>
           ) : (
             <>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={mostrarNuevas}
+                      onChange={() => setMostrarNuevas(!mostrarNuevas)}
+                      color="primary"
+                    />
+                  }
+                  label={mostrarNuevas ? "Ver conversaciones actuales" : "Ver nuevas conversaciones"}
+                />
               <Typography variant="h4" className="text-green-600 font-bold">
-                {totalConversaciones}
+                {totalConversacionesActual}
               </Typography>
               <Typography className="text-gray-500">
                 Total en el periodo seleccionado
@@ -194,13 +258,14 @@ export default function ConversationsChart() {
               <Divider className="my-2" />
               <Typography variant="body2" className="text-gray-600">
                 Conversaciones gestionadas:{" "}
-                <strong>{resumen.conversacionesGestionadas}</strong>
+                <strong>{resumenActual.conversacionesGestionadas}</strong>
               </Typography>
               <Divider className="my-2" />
               <Typography variant="subtitle2" className="mt-2 mb-1">
                 Conversaciones por estado:
               </Typography>
-              {Object.entries(resumen.conversacionesPorEstado || {})
+              
+              {Object.entries(resumenActual.conversacionesPorEstado || {})
                 .filter(([state]) => !["nuevo", "contactado"].includes(state))
                 .map(([state, count]) => (
                   <Typography
@@ -222,7 +287,7 @@ export default function ConversationsChart() {
                     {getStateInfo(state)?.text || state}: {count}
                   </Typography>
                 ))}
-              {resumen.conversacionesCitaAgendadaAccion != 0 && (
+              {resumenActual.conversacionesCitaAgendadaAccion != 0 && (
                 <Typography
                   variant="body2"
                   style={{
@@ -236,17 +301,21 @@ export default function ConversationsChart() {
                   }}
                 >
                   {getStateInfo("cita agendada").text + " Accion"}:{" "}
-                  {resumen.conversacionesCitaAgendadaAccion}
+                  {resumenActual.conversacionesCitaAgendadaAccion}
                 </Typography>
-              )}
+              )}             
               <Divider className="my-2" />
               <Typography variant="body2" className="text-gray-600">
                 Total de interacciones:{" "}
-                <strong>{resumen.totalInteracciones}</strong>
+                <strong>{resumenActual.totalInteracciones}</strong>
               </Typography>
               <Typography variant="body2" className="text-gray-600">
                 Gastos aproximados:{" "}
-                <strong>${resumen.gastosAprox?.toFixed(2)}</strong>
+                <strong>${resumenActual.gastosAprox?.toFixed(2)}</strong>
+              </Typography>
+              <Typography variant="body1" className="text-gray-600 mt-2">
+                Total de gastos general:{" "}
+                <strong>${(resumen.gastosAprox+ resumenNuevasConversaciones.gastosAprox).toFixed(2)}</strong>
               </Typography>
             </>
           )}
@@ -340,7 +409,7 @@ export default function ConversationsChart() {
             <Typography color="error">{error}</Typography>
           ) : (
             <ResponsiveContainer width="100%" height={350} className={"mt-2"}>
-              <BarChart data={data}>
+              <BarChart data={mostrarNuevas ? nuevasConversaciones : data}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
                   dataKey="fecha"
