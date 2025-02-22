@@ -85,7 +85,7 @@ const CalendarPage = () => {
       const mappedEvents = data.citas.map((cita) => {
         const startDate = new Date(cita.fecha_cita);
         const correctedStartDate = new Date(startDate.getTime() + 5 * 60 * 60 * 1000);
-        const endDate = new Date(correctedStartDate.getTime() + 30 * 60 * 1000);
+        const endDate = new Date(correctedStartDate.getTime() + cita.duracion * 60 * 1000);
         return {
           title: `${cita.clientes.nombre} (${cita.clientes.celular})`,
           start: correctedStartDate.toISOString(),
@@ -97,6 +97,7 @@ const CalendarPage = () => {
           estado: cita.estado_cita || "No especificado",
           display: "block",
           celular: cita.clientes.celular,
+          duracion: cita.duracion,
         };
       });
       setCitas(mappedEvents);

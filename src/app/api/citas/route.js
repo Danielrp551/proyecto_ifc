@@ -38,6 +38,7 @@ export async function GET(request) {
         estado_cita: true,
         motivo: true,
         fecha_creacion: true,
+        duracion: true,
         clientes: {
           select: {
             nombre: true,

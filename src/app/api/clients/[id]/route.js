@@ -20,7 +20,7 @@ async function getGoogleCalendarService() {
 }
 
 // Eliminar eventos por rango de tiempo
-async function deleteEventsInRange(calendarService, fecha, horaInicio, duracionMinutos = 30) {
+async function deleteEventsInRange(calendarService, fecha, horaInicio, duracionMinutos = 20) {
   const fecha_inicio = new Date(`${fecha}T${horaInicio}:00`);
   const start = new Date(fecha_inicio.getTime() + 5 * 60 * 60 * 1000);
   const end = new Date(start.getTime() + duracionMinutos * 60 * 1000);
@@ -134,7 +134,7 @@ export async function PUT(req, { params }) {
 
         // Obtener las citas actuales del cliente que se van a marcar como eliminadas
         const citasAEliminar = await prisma.citas.findMany({
-          where: { cliente_id: parseInt(id), estado_cita: "agendada" },
+          where: { cliente_id: parseInt(id), estado_cita: { in: ["agendada","confirmada"]} },
         });
 
         // Marcar como eliminadas las citas existentes del cliente
@@ -160,10 +160,11 @@ export async function PUT(req, { params }) {
             fecha_cita: nuevaCitaFecha,
             estado_cita: estadoCita,
             motivo: motivoCita,
+            duracion: 20,
           },
         });
   
-        await createEvent(calendarService, motivoCita, body.fechaCita, body.horaCita);
+        await createEvent(calendarService, motivoCita, body.fechaCita, body.horaCita,20);
 
         console.log("Nueva cita creada:", nuevaCita);
 
