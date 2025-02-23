@@ -154,18 +154,18 @@ export async function POST(request) {
 
     let motivo;
     if (estado === "cita agendada"){
-      motivo = "Cita reservada para " + nombre;
+      motivo = "Cita confirmada para " + nombre;
     }
     else{
-      motivo = "Cita confirmada para "  + nombre;
+      motivo = "Cita reservada para "  + nombre;
     }
 
     let estado_cita = ""
     if (estado === "cita agendada"){
-      estado_cita = "agendada"
+      estado_cita = "confirmada"
     }
     else{
-      estado_cita = "confirmada"
+      estado_cita = "agendada"
     }
 
     const newClient = await prisma.clientes.create({
