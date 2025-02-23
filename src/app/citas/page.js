@@ -27,6 +27,7 @@ import {
 } from "@mui/icons-material";
 import { endOfDay, startOfDay } from "date-fns";
 import Skeleton from '@mui/material/Skeleton';
+import  AgregarCitaModal   from "../../components/AgregarCitasModal";
 
 
 const StyledButton = styled(Button)(({ theme }) => ({
@@ -71,6 +72,8 @@ const CalendarPage = () => {
   const [primerRender, setPrimerRender] = useState(false);
   const isManualChange = useRef(false);
   const [lastFetchedRange, setLastFetchedRange] = useState({ from: null, to: null });
+
+  const [openModalCrearCita, setOpenModalCrearCita] = useState(false);
 
   const fetchCitas = async (start, end) => {
     setLoading(true);
@@ -206,24 +209,6 @@ const handleDateSet = (dateInfo) => {
             >
               Hoy
             </StyledButton>
-            {/*
-            <ButtonGroup>
-              <IconButton
-                size="small"
-                sx={{ color: "#000" }}
-                onClick={handlePrevClick}
-              >
-                <ChevronLeft />
-              </IconButton>
-              <IconButton
-                size="small"
-                sx={{ color: "#000" }}
-                onClick={handleNextClick}
-              >
-                <ChevronRight />
-              </IconButton>
-            </ButtonGroup>
-            */}
           </Box>
 
           <ButtonGroup
@@ -271,19 +256,6 @@ const handleDateSet = (dateInfo) => {
               Mes
             </StyledButton>
           </ButtonGroup>
-            {/*
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <IconButton size="small" sx={{ color: "#000" }}>
-              <Search />
-            </IconButton>
-            <IconButton size="small" sx={{ color: "#000" }}>
-              <Help />
-            </IconButton>
-            <IconButton size="small" sx={{ color: "#000" }}>
-              <Settings />
-            </IconButton>
-          </Box>
-          */}
         </Box>
 
         <Box sx={{ flex: 1, overflow: "auto" }}>
@@ -301,6 +273,10 @@ const handleDateSet = (dateInfo) => {
             </Box>
           )}
           {!loading && (
+            <>
+            <Button onClick={() => setOpenModalCrearCita(true)} variant="contained" sx={{ mb: 2 }}>Agregar Cita</Button>
+            <AgregarCitaModal open={openModalCrearCita} onClose={() => setOpenModalCrearCita(false)} />
+
             <FullCalendar
               ref={calendarRef}
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -373,6 +349,7 @@ const handleDateSet = (dateInfo) => {
                   </Tooltip>
                 )}
             />
+            </>
           )}
         </Box>
       </Paper>
