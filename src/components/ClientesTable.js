@@ -137,6 +137,7 @@ const [selectedTime, setSelectedTime] = useState(null);
         notas: notes,
         gestor: editedData.gestor === " - " ? "" : editedData.gestor,
         asesorId: asesor.asesor_id,
+        num_intentos: editedData.numeroContactos,
         acciones: editedData.acciones,
         fechaCita: editedData.acciones === "cita_agendada" || editedData.acciones === "promesa_de_pago" ? selectedDate : null,
         horaCita: editedData.acciones === "cita_agendada" || editedData.acciones === "promesa_de_pago" ? selectedTime : null,
@@ -246,6 +247,7 @@ const [selectedTime, setSelectedTime] = useState(null);
     gestor: cliente.gestor !== "" ? cliente.gestor : " - ",
     acciones: cliente.acciones,
     score: cliente.score,
+    numeroContactos: cliente.num_intentos,
   }));
 
   const handleSelectionChange = (newSelection) => {
@@ -367,129 +369,142 @@ const [selectedTime, setSelectedTime] = useState(null);
       >
         <DialogTitle>{dialogTitle}</DialogTitle>
         <DialogContent>
-        {commercialActionLoading ? (
-                <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  height: 150,
-                }}
-              >
-                <CircularProgress />
-              </Box>
-        ) : (
-          <>
-          <p>
-            <strong>Usuario actual:</strong>{" "}
-            {asesor.nombre + " " + asesor.primer_apellido}
-          </p>
-          {editedData && (
+          {commercialActionLoading ? (
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: 150,
+              }}
+            >
+              <CircularProgress />
+            </Box>
+          ) : (
             <>
-              <TextField
-                fullWidth
-                margin="normal"
-                label="Nombre"
-                value={editedData.nombreCompleto}
-                onChange={(e) =>
-                  handleInputChange("nombreCompleto", e.target.value)
-                }
-              />
-              <TextField
-                fullWidth
-                margin="normal"
-                label="Email"
-                value={editedData.email}
-                onChange={(e) => handleInputChange("email", e.target.value)}
-              />
-              <TextField
-                fullWidth
-                margin="normal"
-                label="Teléfono"
-                value={editedData.celular}
-                InputProps={{ readOnly: true }} // No se puede editar el teléfono
-              />
-              <FormControl fullWidth variant="outlined" size="medium">
-                <InputLabel htmlFor="gestor">Gestor</InputLabel>
-                <Select
-                  fullWidth
-                  label="Gestor"
-                  margin="normal"
-                  value={editedData.gestor}
-                  onChange={(e) => handleInputChange("gestor", e.target.value)}
-                >
-                  <MenuItem value=" - ">Sin gestor asignado</MenuItem>
-                  {asesores.map((asesor) => (
-                    <MenuItem
-                      key={asesor.asesor_id}
-                      value={asesor.nombre + " " + asesor.primer_apellido}
-                    >
-                      {asesor.nombre} {asesor.primer_apellido}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <TextField
-                fullWidth
-                margin="normal"
-                label="Observaciones"
-                value={editedData.observaciones}
-                multiline
-                rows={4}
-                onChange={(e) =>
-                  handleInputChange("observaciones", e.target.value)
-                }
-              />
-              <FormControl fullWidth variant="outlined" size="medium">
-                <InputLabel htmlFor="acciones">Acciones</InputLabel>
-                <Select
-                  fullWidth
-                  label="Acciones"
-                  margin="normal"
-                  value={editedData.acciones}
-                  onChange={(e) =>
-                    handleInputChange("acciones", e.target.value)
-                  }
-                >
-                  <MenuItem value="cita_agendada">Cita Agendada</MenuItem>
-                  <MenuItem value="volver_contactar">
-                    Volver a contactar
-                  </MenuItem>
-                  <MenuItem value="atendio_otro_lugar">
-                    Atendió en otro lugar
-                  </MenuItem>
-                  <MenuItem value="no_interesado">No Interesado</MenuItem>
-                  <MenuItem value="promesa_de_pago">Promesa</MenuItem>
-                </Select>
-              </FormControl>
-              {editedData?.acciones === "promesa_de_pago" || editedData?.acciones === "cita_agendada" ? (
+              <p>
+                <strong>Usuario actual:</strong>{" "}
+                {asesor.nombre + " " + asesor.primer_apellido}
+              </p>
+              {editedData && (
                 <>
                   <TextField
-                    width="50%"
+                    fullWidth
                     margin="normal"
-                    type="date"
-                    label="Fecha de la cita"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
+                    label="Nombre"
+                    value={editedData.nombreCompleto}
+                    onChange={(e) =>
+                      handleInputChange("nombreCompleto", e.target.value)
+                    }
                   />
                   <TextField
-                    width="50%"
+                    fullWidth
                     margin="normal"
-                    type="time"
-                    label="Hora de la cita"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    value={selectedTime}
-                    onChange={(e) => setSelectedTime(e.target.value)}
+                    label="Email"
+                    value={editedData.email}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
                   />
-                </>
-              ) : null}
+                  <TextField
+                    fullWidth
+                    margin="normal"
+                    label="Teléfono"
+                    value={editedData.celular}
+                    InputProps={{ readOnly: true }} // No se puede editar el teléfono
+                  />
+                  <FormControl fullWidth variant="outlined" size="medium">
+                    <InputLabel htmlFor="gestor">Gestor</InputLabel>
+                    <Select
+                      fullWidth
+                      label="Gestor"
+                      margin="normal"
+                      value={editedData.gestor}
+                      onChange={(e) =>
+                        handleInputChange("gestor", e.target.value)
+                      }
+                    >
+                      <MenuItem value=" - ">Sin gestor asignado</MenuItem>
+                      {asesores.map((asesor) => (
+                        <MenuItem
+                          key={asesor.asesor_id}
+                          value={asesor.nombre + " " + asesor.primer_apellido}
+                        >
+                          {asesor.nombre} {asesor.primer_apellido}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  <TextField
+                    fullWidth
+                    margin="normal"
+                    label="Observaciones"
+                    value={editedData.observaciones}
+                    multiline
+                    rows={4}
+                    onChange={(e) =>
+                      handleInputChange("observaciones", e.target.value)
+                    }
+                  />
+                  <TextField
+                    fullWidth
+                    margin="normal"
+                    label="Número de contactos"
+                    type="number"
+                    value={editedData.numeroContactos ?? 0}
+                    onChange={(e) =>
+                      handleInputChange("numeroContactos", e.target.value)
+                    }
+                  />
+                  <FormControl fullWidth variant="outlined" size="medium">
+                    <InputLabel htmlFor="acciones">Acciones</InputLabel>
+                    <Select
+                      fullWidth
+                      label="Acciones"
+                      margin="normal"
+                      value={editedData.acciones}
+                      onChange={(e) =>
+                        handleInputChange("acciones", e.target.value)
+                      }
+                    >
+                      <MenuItem value="cita_agendada">Cita Agendada</MenuItem>
+                      <MenuItem value="volver_contactar">
+                        Volver a contactar
+                      </MenuItem>
+                      <MenuItem value="atendio_otro_lugar">
+                        Atendió en otro lugar
+                      </MenuItem>
+                      <MenuItem value="no_interesado">No Interesado</MenuItem>
+                      <MenuItem value="promesa_de_pago">Promesa</MenuItem>
+                    </Select>
+                  </FormControl>
+                  {editedData?.acciones === "promesa_de_pago" ||
+                  editedData?.acciones === "cita_agendada" ? (
+                    <>
+                      <TextField
+                        width="50%"
+                        margin="normal"
+                        type="date"
+                        label="Fecha de la cita"
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                      />
+                      <TextField
+                        width="50%"
+                        margin="normal"
+                        type="time"
+                        label="Hora de la cita"
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                        value={selectedTime}
+                        onChange={(e) => setSelectedTime(e.target.value)}
+                      />
+                    </>
+                  ) : null}
 
-              {/*
+                  {/*
               <TextField
                 fullWidth
                 margin="normal"
@@ -502,11 +517,10 @@ const [selectedTime, setSelectedTime] = useState(null);
                 rows={4}
               />
               */}
-               
+                </>
+              )}
             </>
           )}
-          </>
-        )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDialogClose}>Cerrar</Button>

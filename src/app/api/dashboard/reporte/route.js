@@ -53,19 +53,14 @@ export async function GET(request) {
 
       // Número de contactos por cliente (Intensity)
       const intensity = await prisma.$queryRaw`
-        SELECT AVG(contactos) AS promedio_contactos
-        FROM (
-          SELECT COUNT(*) AS contactos
-          FROM acciones_comerciales
-          WHERE cliente_id IN (
-            SELECT cliente_id
-            FROM clientes
-            WHERE estado = ${estado} AND fecha_creacion >= ${fechaInicio} AND fecha_creacion <= ${fechaFin}
-          )
-          GROUP BY cliente_id
-        ) AS subquery
+      SELECT AVG(num_intentos) AS promedio_intentos
+      FROM clientes
+      WHERE estado = ${estado}
+        AND fecha_creacion >= ${fechaInicio}
+        AND fecha_creacion <= ${fechaFin}
       `;
-      const promedioContactos = intensity[0]?.promedio_contactos || 0;
+      console.log('intensity', intensity);
+      const promedioContactos = intensity[0]?.promedio_intentos || 0;
 
       // Acciones por estado (extraídas del campo `acciones` en clientes)
       const acciones = await prisma.clientes.groupBy({

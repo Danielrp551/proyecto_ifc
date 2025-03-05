@@ -85,6 +85,10 @@ export async function PUT(req, { params }) {
     const [nombreAnterior, ...apellidosAnteriores] = gestorAnterior ? gestorAnterior.split(" ") : [];
     const [nombreNuevo, ...apellidosNuevos] = gestorNuevo ? gestorNuevo.split(" ") : [];
 
+    console.log("Numero de intentos", body.num_intentos);
+    const num_intentos_int = parseInt(body.num_intentos);
+    console.log("num_intentos_int", num_intentos_int);
+
     // Actualiza el cliente en la base de datos
     const updatedClient = await prisma.clientes.update({
       where: { cliente_id: parseInt(id) },
@@ -95,6 +99,7 @@ export async function PUT(req, { params }) {
         email: body.email,
         gestor: gestorNuevo,
         acciones: body.acciones,
+        num_intentos: num_intentos_int,
       },
     });
 
@@ -174,12 +179,13 @@ export async function PUT(req, { params }) {
         else
           estado_cliente = "promesas de pago"
         // actualizar cliente
-        await prisma.clientes.update({
+        /*await prisma.clientes.update({
           where: { cliente_id: parseInt(id) },
           data: {
             estado : estado_cliente
           },
         });
+        */
       }
 
     // Registra la acción comercial

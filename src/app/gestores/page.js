@@ -246,6 +246,7 @@ const GestoresPage = () => {
         notas: notes,
         gestor: editedData.gestor === " - " ? "" : editedData.gestor,
         asesorId: session.user?.asesor.asesor_id,
+        num_intentos: editedData.num_intentos,
         acciones: editedData.acciones,
         fechaCita:
           editedData.acciones === "cita_agendada" ||
@@ -476,7 +477,9 @@ const GestoresPage = () => {
                   <MenuItem value="seguimiento">Seguimiento</MenuItem>
                   <MenuItem value="interesado">Interesado</MenuItem>
                   <MenuItem value="promesas de pago">Promesa de pago</MenuItem>
-                  <MenuItem value="promesa_pago_cancelada">Promesa de pago cancelada</MenuItem>
+                  <MenuItem value="promesa_pago_cancelada">
+                    Promesa de pago cancelada
+                  </MenuItem>
                   <MenuItem value="cita agendada">Cita Agendada</MenuItem>
                 </Select>
               </FormControl>
@@ -588,7 +591,7 @@ const GestoresPage = () => {
                           />
                         </TableCell>
                         <TableCell>
-                        <Chip
+                          <Chip
                             label={scoreInfo.text}
                             sx={{
                               backgroundColor: scoreInfo.color,
@@ -676,102 +679,112 @@ const GestoresPage = () => {
       >
         <DialogTitle>{dialogTitle}</DialogTitle>
         <DialogContent>
-          { commercialActionLoading ? (
+          {commercialActionLoading ? (
             <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              height: 150,
-            }}
-          >
-            <CircularProgress />
-          </Box>
-        ) : (
-          editedData && (
-            <>
-              <TextField
-                fullWidth
-                margin="normal"
-                label="Nombre"
-                value={editedData.nombreCompleto}
-                onChange={(e) =>
-                  handleInputChangeModal("nombreCompleto", e.target.value)
-                }
-              />
-              <TextField
-                fullWidth
-                margin="normal"
-                label="Email"
-                value={editedData.email || ""}
-                onChange={(e) =>
-                  handleInputChangeModal("email", e.target.value)
-                }
-              />
-              <TextField
-                fullWidth
-                margin="normal"
-                label="Teléfono"
-                value={editedData.celular}
-                InputProps={{ readOnly: true }}
-              />
-              <FormControl fullWidth variant="outlined" size="medium">
-                <InputLabel htmlFor="gestor">Gestor</InputLabel>
-                <Select
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: 150,
+              }}
+            >
+              <CircularProgress />
+            </Box>
+          ) : (
+            editedData && (
+              <>
+                <TextField
                   fullWidth
-                  label="Gestor"
                   margin="normal"
-                  value={editedData.gestor === "" ? " - " : editedData.gestor}
+                  label="Nombre"
+                  value={editedData.nombreCompleto}
                   onChange={(e) =>
-                    handleInputChangeModal("gestor", e.target.value)
+                    handleInputChangeModal("nombreCompleto", e.target.value)
                   }
-                >
-                  <MenuItem value=" - ">Sin gestor asignado</MenuItem>
-                  {gestores.map((gestor) => (
-                    <MenuItem
-                      key={gestor.asesor_id}
-                      value={gestor.nombre + " " + gestor.primer_apellido}
-                    >
-                      {gestor.nombre} {gestor.primer_apellido}
+                />
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  label="Email"
+                  value={editedData.email || ""}
+                  onChange={(e) =>
+                    handleInputChangeModal("email", e.target.value)
+                  }
+                />
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  label="Teléfono"
+                  value={editedData.celular}
+                  InputProps={{ readOnly: true }}
+                />
+                <FormControl fullWidth variant="outlined" size="medium">
+                  <InputLabel htmlFor="gestor">Gestor</InputLabel>
+                  <Select
+                    fullWidth
+                    label="Gestor"
+                    margin="normal"
+                    value={editedData.gestor === "" ? " - " : editedData.gestor}
+                    onChange={(e) =>
+                      handleInputChangeModal("gestor", e.target.value)
+                    }
+                  >
+                    <MenuItem value=" - ">Sin gestor asignado</MenuItem>
+                    {gestores.map((gestor) => (
+                      <MenuItem
+                        key={gestor.asesor_id}
+                        value={gestor.nombre + " " + gestor.primer_apellido}
+                      >
+                        {gestor.nombre} {gestor.primer_apellido}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  label="Observaciones"
+                  value={editedData.observaciones || ""}
+                  multiline
+                  rows={4}
+                  onChange={(e) =>
+                    handleInputChangeModal("observaciones", e.target.value)
+                  }
+                />
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  label="Número de contactos"
+                  type="number"
+                  value={editedData.num_intentos ?? 0}
+                  onChange={(e) =>
+                    handleInputChangeModal("num_intentos", e.target.value)
+                  }
+                />
+                <FormControl fullWidth variant="outlined" size="medium">
+                  <InputLabel htmlFor="acciones">Acciones</InputLabel>
+                  <Select
+                    fullWidth
+                    label="Acciones"
+                    margin="normal"
+                    value={editedData.acciones}
+                    onChange={(e) =>
+                      handleInputChangeModal("acciones", e.target.value)
+                    }
+                  >
+                    <MenuItem value="vacio">Todos</MenuItem>
+                    <MenuItem value="cita_agendada">Cita Agendada</MenuItem>
+                    <MenuItem value="volver_contactar">
+                      Volver a contactar
                     </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <TextField
-                fullWidth
-                margin="normal"
-                label="Observaciones"
-                value={editedData.observaciones || ""}
-                multiline
-                rows={4}
-                onChange={(e) =>
-                  handleInputChangeModal("observaciones", e.target.value)
-                }
-              />
-              <FormControl fullWidth variant="outlined" size="medium">
-                <InputLabel htmlFor="acciones">Acciones</InputLabel>
-                <Select
-                  fullWidth
-                  label="Acciones"
-                  margin="normal"
-                  value={editedData.acciones}
-                  onChange={(e) =>
-                    handleInputChangeModal("acciones", e.target.value)
-                  }
-                >
-                  <MenuItem value="vacio">Todos</MenuItem>
-                  <MenuItem value="cita_agendada">Cita Agendada</MenuItem>
-                  <MenuItem value="volver_contactar">
-                    Volver a contactar
-                  </MenuItem>
-                  <MenuItem value="atendio_otro_lugar">
-                    Atendió en otro lugar
-                  </MenuItem>
-                  <MenuItem value="no_interesado">No Interesado</MenuItem>
-                  <MenuItem value="promesa_de_pago">Promesa</MenuItem>
-                </Select>
-              </FormControl>
-              {(editedData.acciones === "cita_agendada" ||
+                    <MenuItem value="atendio_otro_lugar">
+                      Atendió en otro lugar
+                    </MenuItem>
+                    <MenuItem value="no_interesado">No Interesado</MenuItem>
+                    <MenuItem value="promesa_de_pago">Promesa</MenuItem>
+                  </Select>
+                </FormControl>
+                {(editedData.acciones === "cita_agendada" ||
                   editedData.acciones === "promesa_de_pago") && (
                   <>
                     <TextField
@@ -798,9 +811,9 @@ const GestoresPage = () => {
                     />
                   </>
                 )}
-            </>
-          ))
-        }
+              </>
+            )
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDialogClose}>Cerrar</Button>

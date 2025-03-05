@@ -99,6 +99,7 @@ export async function GET(request) {
         estado: true,
         observaciones: true,
         score: true,
+        num_intentos: true,
       },
     });
 

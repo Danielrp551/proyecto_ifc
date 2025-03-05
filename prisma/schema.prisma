@@ -78,6 +78,7 @@ model clientes {
   acciones                     String?                @default("") @db.VarChar(50)
   in_out                       Boolean?               @default(false)
   score                        String                 @default("no_score") @db.VarChar(20)
+  num_intentos                 Int?                   @default(1)
   acciones_comerciales         acciones_comerciales[]
   citas                        citas[]
   cliente_campa_a              cliente_campa_a[]

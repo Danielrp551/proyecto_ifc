@@ -262,6 +262,7 @@ export default function ClientsManagement() {
         notas: notes,
         gestor: editedData.gestor === " - " ? "" : editedData.gestor,
         asesorId: session.user?.asesor.asesor_id,
+        num_intentos: editedData.num_intentos,
         acciones: editedData.acciones,
         fechaCita:
           editedData.acciones === "cita_agendada" ||
@@ -468,7 +469,9 @@ export default function ClientsManagement() {
                   <MenuItem value="seguimiento">Seguimiento</MenuItem>
                   <MenuItem value="interesado">Interesado</MenuItem>
                   <MenuItem value="promesas de pago">Promesa de pago</MenuItem>
-                  <MenuItem value="promesa_pago_cancelada">Promesa de pago cancelada</MenuItem>
+                  <MenuItem value="promesa_pago_cancelada">
+                    Promesa de pago cancelada
+                  </MenuItem>
                   <MenuItem value="cita agendada">Cita Agendada</MenuItem>
                 </Select>
               </FormControl>
@@ -569,24 +572,24 @@ export default function ClientsManagement() {
                     <TableCell>{client.nombre}</TableCell>
                     <TableCell>{client.celular}</TableCell>
                     <TableCell>
-                    <Chip
-                            label={getStateInfo(client.estado).text}
-                            sx={{
-                              backgroundColor: getStateInfo(client.estado).color,
-                              color: getStateInfo(client.estado).textColor,
-                              fontWeight: "medium",
-                            }}
-                          />
+                      <Chip
+                        label={getStateInfo(client.estado).text}
+                        sx={{
+                          backgroundColor: getStateInfo(client.estado).color,
+                          color: getStateInfo(client.estado).textColor,
+                          fontWeight: "medium",
+                        }}
+                      />
                     </TableCell>
                     <TableCell>
-                    <Chip
-                            label={getScoreInfo(client.score).text}
-                            sx={{
-                              backgroundColor: getScoreInfo(client.score).color,
-                              color: getScoreInfo(client.score).textColor,
-                              fontWeight: "medium",
-                            }}
-                          />
+                      <Chip
+                        label={getScoreInfo(client.score).text}
+                        sx={{
+                          backgroundColor: getScoreInfo(client.score).color,
+                          color: getScoreInfo(client.score).textColor,
+                          fontWeight: "medium",
+                        }}
+                      />
                     </TableCell>
                     <TableCell>
                       {client.bound === true ? "IN" : "OUT"}
@@ -642,135 +645,149 @@ export default function ClientsManagement() {
       >
         <DialogTitle>{dialogTitle}</DialogTitle>
         <DialogContent>
-        {commercialActionLoading ? (
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        height: 150,
-      }}
-    >
-      <CircularProgress />
-    </Box>
-  ) : (
-          editedData && (
-            <>
-              <TextField
-                fullWidth
-                margin="normal"
-                label="Nombre"
-                value={editedData.nombreCompleto}
-                onChange={(e) =>
-                  handleInputChangeModal("nombreCompleto", e.target.value)
-                }
-              />
-              <TextField
-                fullWidth
-                margin="normal"
-                label="Email"
-                value={editedData.email || ""}
-                onChange={(e) =>
-                  handleInputChangeModal("email", e.target.value)
-                }
-              />
-              <TextField
-                fullWidth
-                margin="normal"
-                label="Teléfono"
-                value={editedData.celular}
-                InputProps={{ readOnly: true }}
-              />
-              <FormControl fullWidth variant="outlined" size="medium">
-                <InputLabel htmlFor="gestor">Gestor</InputLabel>
-                <Select
+          {commercialActionLoading ? (
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: 150,
+              }}
+            >
+              <CircularProgress />
+            </Box>
+          ) : (
+            editedData && (
+              <>
+                <TextField
                   fullWidth
-                  label="Gestor"
                   margin="normal"
-                  value={editedData.gestor === "" ? " - " : editedData.gestor}
+                  label="Nombre"
+                  value={editedData.nombreCompleto}
                   onChange={(e) =>
-                    handleInputChangeModal("gestor", e.target.value)
+                    handleInputChangeModal("nombreCompleto", e.target.value)
                   }
-                >
-                  <MenuItem value=" - ">Sin gestor asignado</MenuItem>
-                  {gestores.map((gestor) => (
-                    <MenuItem
-                      key={gestor.asesor_id}
-                      value={gestor.nombre + " " + gestor.primer_apellido}
-                    >
-                      {gestor.nombre} {gestor.primer_apellido}
+                />
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  label="Email"
+                  value={editedData.email || ""}
+                  onChange={(e) =>
+                    handleInputChangeModal("email", e.target.value)
+                  }
+                />
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  label="Teléfono"
+                  value={editedData.celular}
+                  InputProps={{ readOnly: true }}
+                />
+                <FormControl fullWidth variant="outlined" size="medium">
+                  <InputLabel htmlFor="gestor">Gestor</InputLabel>
+                  <Select
+                    fullWidth
+                    label="Gestor"
+                    margin="normal"
+                    value={editedData.gestor === "" ? " - " : editedData.gestor}
+                    onChange={(e) =>
+                      handleInputChangeModal("gestor", e.target.value)
+                    }
+                  >
+                    <MenuItem value=" - ">Sin gestor asignado</MenuItem>
+                    {gestores.map((gestor) => (
+                      <MenuItem
+                        key={gestor.asesor_id}
+                        value={gestor.nombre + " " + gestor.primer_apellido}
+                      >
+                        {gestor.nombre} {gestor.primer_apellido}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  label="Observaciones"
+                  value={editedData.observaciones || ""}
+                  multiline
+                  rows={4}
+                  onChange={(e) =>
+                    handleInputChangeModal("observaciones", e.target.value)
+                  }
+                />
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  label="Número de contactos"
+                  type="number"
+                  value={editedData.num_intentos ?? 0}
+                  onChange={(e) =>
+                    handleInputChangeModal("num_intentos", e.target.value)
+                  }
+                />
+                <FormControl fullWidth variant="outlined" size="medium">
+                  <InputLabel htmlFor="acciones">Acciones</InputLabel>
+                  <Select
+                    fullWidth
+                    label="Acciones"
+                    margin="normal"
+                    value={editedData.acciones}
+                    onChange={(e) =>
+                      handleInputChangeModal("acciones", e.target.value)
+                    }
+                  >
+                    <MenuItem value="cita_agendada">Cita Agendada</MenuItem>
+                    <MenuItem value="volver_contactar">
+                      Volver a contactar
                     </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <TextField
-                fullWidth
-                margin="normal"
-                label="Observaciones"
-                value={editedData.observaciones || ""}
-                multiline
-                rows={4}
-                onChange={(e) =>
-                  handleInputChangeModal("observaciones", e.target.value)
-                }
-              />
-              <FormControl fullWidth variant="outlined" size="medium">
-                <InputLabel htmlFor="acciones">Acciones</InputLabel>
-                <Select
-                  fullWidth
-                  label="Acciones"
-                  margin="normal"
-                  value={editedData.acciones}
-                  onChange={(e) =>
-                    handleInputChangeModal("acciones", e.target.value)
-                  }
-                >
-                  <MenuItem value="cita_agendada">Cita Agendada</MenuItem>
-                  <MenuItem value="volver_contactar">
-                    Volver a contactar
-                  </MenuItem>
-                  <MenuItem value="atendio_otro_lugar">
-                    Atendió en otro lugar
-                  </MenuItem>
-                  <MenuItem value="no_interesado">No Interesado</MenuItem>
-                  <MenuItem value="promesa_de_pago">Promesa</MenuItem>
-                </Select>
-              </FormControl>
-                    {(editedData.acciones === "cita_agendada" ||
-                editedData.acciones === "promesa_de_pago") && (
-                <>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    type="date"
-                    label="Fecha de la cita"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    value={selectedDate}
+                    <MenuItem value="atendio_otro_lugar">
+                      Atendió en otro lugar
+                    </MenuItem>
+                    <MenuItem value="no_interesado">No Interesado</MenuItem>
+                    <MenuItem value="promesa_de_pago">Promesa</MenuItem>
+                  </Select>
+                </FormControl>
+                {(editedData.acciones === "cita_agendada" ||
+                  editedData.acciones === "promesa_de_pago") && (
+                  <>
+                    <TextField
+                      fullWidth
+                      margin="normal"
+                      type="date"
+                      label="Fecha de la cita"
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      value={selectedDate}
                       onChange={(e) => setSelectedDate(e.target.value)}
-                  />
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    type="time"
-                    label="Hora de la cita"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    value={selectedTime}
+                    />
+                    <TextField
+                      fullWidth
+                      margin="normal"
+                      type="time"
+                      label="Hora de la cita"
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      value={selectedTime}
                       onChange={(e) => setSelectedTime(e.target.value)}
-                    
-                  />
-                </>
-              )}
-            </>
-          )
-        )}
+                    />
+                  </>
+                )}
+              </>
+            )
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDialogClose}>Cerrar</Button>
-          <Button onClick={handleSave} variant="contained" color="primary" disabled={commercialActionLoading}>
+          <Button
+            onClick={handleSave}
+            variant="contained"
+            color="primary"
+            disabled={commercialActionLoading}
+          >
             Guardar
           </Button>
         </DialogActions>
