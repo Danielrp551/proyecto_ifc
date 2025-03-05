@@ -5,21 +5,31 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get('page')) || 1;
   const pageSize = parseInt(searchParams.get('pageSize')) || 10;
-  const type = searchParams.get('tipo');
+  const type = searchParams.get('tipo') || "";
   const skip = (page - 1) * pageSize;
 
   try {
-    const whereClause = type ? { tipo: type } : {};
+    console.log('Fetching campaigns:', { page, pageSize, type });
+    const whereClause = {
+      tipo: type
+    };
+    console.log('whereClause', whereClause);
 
-    const [campaigns, totalCount] = await Promise.all([
-      prisma.campa_as.findMany({
-        skip,
-        take: pageSize,
-        where: whereClause,
-        orderBy: { fecha_creacion: 'desc' },
-      }),
-      prisma.campa_as.count({where: whereClause}),
-    ]);
+    
+    const campaigns = await prisma.campa_as.findMany({
+      skip,
+      take: pageSize,
+      where: whereClause,
+      orderBy: { fecha_creacion: 'desc' },
+    })
+    //const campaigns = await prisma.campa_as.findMany();
+
+    console.log('whereClause', whereClause);
+
+    const totalCount = await prisma.campa_as.count({where: whereClause})
+    
+
+    console.log('Fetching campaigns:', { page, pageSize, type });
 
     return NextResponse.json({
       campaigns,

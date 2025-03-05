@@ -69,7 +69,7 @@ export default function CampaignManagement() {
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
-  const [campaignTypeFilter, setCampaignTypeFilter] = useState("all");
+  const [campaignTypeFilter, setCampaignTypeFilter] = useState("out");
   const [anchorEl, setAnchorEl] = useState(null);
   const [errors, setErrors] = useState({});
   const [page, setPage] = useState(0);
@@ -107,8 +107,7 @@ export default function CampaignManagement() {
   const fetchCampaigns = async () => {
     setLoading(true);
     try {
-      const tipoParam =
-        campaignTypeFilter === "all" ? "" : `tipo=${campaignTypeFilter}`;
+      const tipoParam = `tipo=${campaignTypeFilter}`;
         const response = await fetch(
             `/api/campaigns?${tipoParam}&page=${page + 1}&pageSize=${pageSize}`
           );
@@ -492,7 +491,7 @@ export default function CampaignManagement() {
               onChange={handleCampaignTypeFilterChange}
               label="Tipo de Campaña"
             >
-              <MenuItem value="all">Todas</MenuItem>
+              {/*<MenuItem value="all">Todas</MenuItem>*/}
               <MenuItem value="in">IN</MenuItem>
               <MenuItem value="out">OUT</MenuItem>
             </Select>
