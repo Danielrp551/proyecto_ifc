@@ -11,7 +11,7 @@ export async function GET(request) {
 
     // Convertir `page` y `pageSize` a números
     const pageNumber = parseInt(page, 10);
-    const pageSizeNumber = parseInt(pageSize, 10);
+    const pageSizeNumber = parseInt(pageSize, 30);
 
     // Calcular el desplazamiento
     const skip = (pageNumber - 1) * pageSizeNumber;
