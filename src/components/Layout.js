@@ -72,6 +72,7 @@ export default function Layout({ children }) {
       <Divider sx={{ bgcolor: "#2D3748" }} />
       <List>
         {isAdmin && (
+          <>
           <ListItem
             button="true"
             onClick={() => router.push("/admin")}
@@ -86,6 +87,21 @@ export default function Layout({ children }) {
             </ListItemIcon>
             <ListItemText primary="Admin" />
           </ListItem>
+          <ListItem
+            button="true"
+            onClick={() => router.push("/chats")}
+            sx={{
+              "&:hover": { bgcolor: "#2D3748" },
+              px: 3,
+              py: 1.5,
+            }}
+          >
+            <ListItemIcon sx={{ color: "#fff" }}>
+              <AdminPanelSettingsIcon />
+            </ListItemIcon>
+            <ListItemText primary="Mis chats" />
+          </ListItem>          
+          </>
         )}
         <ListItem
           button="true"

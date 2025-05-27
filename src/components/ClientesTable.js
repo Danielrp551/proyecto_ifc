@@ -32,6 +32,7 @@ import { useRouter } from "next/navigation";
 import { getStateInfo } from "@/app/utils/stateMapping";
 import { set } from "date-fns";
 import { getScoreInfo } from "@/app/utils/scoreMapping";
+import ModalTomarControlCliente from "./ModalTomarControlCliente";
 
 export default function ClientesTable({
   data,
@@ -65,6 +66,8 @@ export default function ClientesTable({
   const [conversationData, setConversationData] = useState(null);
   const [selectedConversation, setSelectedConversation] = useState(0);
 
+  const [openModalTomarControl, setOpenModalTomarControl] = useState(false);
+
   const [selectedDate, setSelectedDate] = useState(null);
 const [selectedTime, setSelectedTime] = useState(null);
 
@@ -88,6 +91,8 @@ const [selectedTime, setSelectedTime] = useState(null);
     } else if (action === "conversacion") {
       setOpenConversationDialog(true);
       fetchConversation(selectedRow.id);
+    } else if (action === "tomar_control") {
+      setOpenModalTomarControl(true);
     }
 
     handleMenuClose();
@@ -358,8 +363,24 @@ const [selectedTime, setSelectedTime] = useState(null);
         <MenuItem onClick={() => handleAction("conversacion")}>
           Ver Conversación
         </MenuItem>
+        <MenuItem onClick={() => handleAction("tomar_control")}>
+          Tomar control del cliente
+        </MenuItem>
         {/*<MenuItem onClick={() => handleAction('detalles')}>Ver Detalles</MenuItem>*/}
       </Menu>
+
+      <ModalTomarControlCliente
+        open={openModalTomarControl}
+        onClose={() => setOpenModalTomarControl(false)}
+        clienteId={selectedRow?.id}
+        asesorId={asesor.asesor_id}
+        onSuccess={() => {
+          setRefresh()
+          setSnackbarMessage("Ahora tienes el control del cliente.")
+          setSnackbarSeverity("success")
+          setOpenSnackbar(true)
+        }}
+      />
 
       <Dialog
         open={openDialog}

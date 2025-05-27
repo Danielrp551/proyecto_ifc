@@ -35,6 +35,7 @@ model asesor {
   num_leads            Int?                   @default(0)
   acciones_comerciales acciones_comerciales[]
   usuario              usuario                @relation(fields: [usuario_id], references: [usuario_id], onDelete: Cascade, onUpdate: NoAction, map: "asesor_ibfk_1")
+  clientes             clientes[]
 
   @@index([usuario_id], map: "usuario_id")
 }
@@ -79,14 +80,20 @@ model clientes {
   in_out                       Boolean?               @default(false)
   score                        String                 @default("no_score") @db.VarChar(20)
   num_intentos                 Int?                   @default(1)
+  tipo_control                 String                 @default("bot") @db.VarChar(20)
+  asesor_control_id            Int?
+  historial_control            String                 @default("") @db.VarChar(300)
   acciones_comerciales         acciones_comerciales[]
   citas                        citas[]
   cliente_campa_a              cliente_campa_a[]
+  asesor                       asesor?                @relation(fields: [asesor_control_id], references: [asesor_id], onUpdate: NoAction, map: "fk_clientes_asesor_control")
   conversaciones               conversaciones[]
   historico                    historico[]
   historico_score              historico_score[]
   leads                        leads[]
   pagos                        pagos[]
+
+  @@index([asesor_control_id], map: "fk_clientes_asesor_control")
 }
 
 model conversaciones {
