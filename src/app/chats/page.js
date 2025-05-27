@@ -32,10 +32,13 @@ export default function MisChats() {
   // Asesor ID : session.user.asesor
 
   useEffect(() => {
+    if (status !== "authenticated") return;
+    
     const fetchChats = async () => {
       try {
-        const asesorId = session?.user?.asesor
+        const asesorId = session?.user?.asesor.asesor_id
         const queryParams = new URLSearchParams({ orderBy })
+        setLoading(true)
 
         if (asesorId) {
             queryParams.append("asesorId", asesorId)
@@ -219,7 +222,7 @@ export default function MisChats() {
     }
 
     fetchChats()
-  }, [orderBy])
+  }, [orderBy,status])
 
   const handleSelectChat = (chat) => {
     setSelectedChat(chat)
@@ -281,6 +284,7 @@ export default function MisChats() {
                 onSelectChat={handleSelectChat} 
                 orderBy={orderBy}
                 onChangeOrderBy={setOrderBy}
+                loading={loading}
             />
           </Box>
           <Box sx={{ width: "67%", bgcolor: "#e5ddd5" }}>

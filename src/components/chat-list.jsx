@@ -18,8 +18,9 @@ import ListItemText from "@mui/material/ListItemText"
 import Typography from "@mui/material/Typography"
 import Divider from "@mui/material/Divider"
 import ChatItem from "./chat-item"
+import CircularProgress from "@mui/material/CircularProgress"
 
-export default function ChatList({ chats, selectedChatId, onSelectChat, orderBy, onChangeOrderBy }) {
+export default function ChatList({ chats, selectedChatId, onSelectChat, orderBy, onChangeOrderBy, loading }) {
   const [searchQuery, setSearchQuery] = useState("")
   const [anchorEl, setAnchorEl] = useState(null)
   const open = Boolean(anchorEl)
@@ -63,9 +64,10 @@ export default function ChatList({ chats, selectedChatId, onSelectChat, orderBy,
       {/* Header con filtros */}
       <Box sx={{ p: 1, bgcolor: "background.paper" }}>
         <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-          <Typography variant="subtitle2" sx={{ flexGrow: 1, ml: 1 }}>
+            <Typography variant="subtitle2" sx={{ flexGrow: 1, ml: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
             Conversaciones ({chats.length})
-          </Typography>
+            {loading && <CircularProgress size={16} />}
+            </Typography>
           <Tooltip title="Ordenar conversaciones">
             <IconButton
               size="small"
