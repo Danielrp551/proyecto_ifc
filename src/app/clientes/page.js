@@ -47,6 +47,7 @@ import { getStateInfo } from "@/app/utils/stateMapping";
 import { endOfDay, startOfDay, differenceInHours } from "date-fns";
 import { useSession } from "next-auth/react";
 import { getScoreInfo } from "../utils/scoreMapping";
+import ModalTomarControlCliente from "@/components/ModalTomarControlCliente";
 
 export default function ClientsManagement() {
   const [clients, setClients] = useState([]);
@@ -87,6 +88,9 @@ export default function ClientsManagement() {
   const [commercialActionLoading, setCommercialActionLoading] = useState(false);
     const [selectedDate, setSelectedDate] = useState("");
     const [selectedTime, setSelectedTime] = useState("");
+
+  const [openModalTomarControl, setOpenModalTomarControl] = useState(false);
+const [selectedClienteId, setSelectedClienteId] = useState(null);
 
   const router = useRouter();
 
@@ -634,9 +638,32 @@ export default function ClientsManagement() {
             <MenuItem onClick={() => handleAction("conversacion")}>
               Ver Conversación
             </MenuItem>
+            <MenuItem
+              onClick={() => {
+                setSelectedClienteId(selectedClient.cliente_id);
+                setOpenModalTomarControl(true);
+                handleMenuClose();
+              }}
+            >
+              Tomar Control del Cliente
+            </MenuItem>
           </Menu>
         </>
       )}
+
+      <ModalTomarControlCliente
+        open={openModalTomarControl}
+        onClose={() => setOpenModalTomarControl(false)}
+        clienteId={selectedClienteId}
+        asesorId={session?.user?.asesor?.asesor_id}
+        onSuccess={() => {
+          setOpenSnackbar(true);
+          setSnackbarMessage("Ahora estás a cargo de este cliente.");
+          setSnackbarSeverity("success");
+          setRefresh(prev => !prev); 
+        }}
+      />
+
       <Dialog
         open={openDialog}
         onClose={handleDialogClose}

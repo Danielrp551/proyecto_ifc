@@ -45,6 +45,7 @@ import { DateFilterv2 } from "@/components/date-filter_v2";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { startOfDay, endOfDay } from "date-fns";
+import ModalTomarControlCliente from "@/components/ModalTomarControlCliente";
 
 const GestoresPage = () => {
   const [gestores, setGestores] = useState([]);
@@ -88,6 +89,8 @@ const GestoresPage = () => {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [commercialActionLoading, setCommercialActionLoading] = useState(false);
+  const [modalControlAbierto, setModalControlAbierto] = useState(false);
+const [clienteParaControl, setClienteParaControl] = useState(null);
 
   const [refresh, setRefresh] = useState(false);
 
@@ -387,7 +390,11 @@ const GestoresPage = () => {
       setCommercialActionLoading(false);
     }
   };
-  
+
+  const handleTomarControl = (cliente) => {
+  setClienteParaControl(cliente);
+  setModalControlAbierto(true);
+};
 
   return (
     <Container className="py-8">
@@ -658,9 +665,30 @@ const GestoresPage = () => {
             <MenuItem onClick={() => handleAction("conversacion")}>
               Ver Conversación
             </MenuItem>
+            <MenuItem
+              onClick={() => {
+                handleMenuClose();
+                handleTomarControl(selectedClient);
+              }}
+            >
+              Tomar Control
+            </MenuItem>
           </Menu>
         </>
       )}
+
+      <ModalTomarControlCliente
+        open={modalControlAbierto}
+        onClose={() => setModalControlAbierto(false)}
+        clienteId={clienteParaControl?.cliente_id}
+        asesorId={session?.user?.asesor?.asesor_id}
+        onSuccess={() => {
+          setOpenSnackbar(true);
+          setSnackbarMessage("Ahora estás a cargo de este cliente.");
+          setSnackbarSeverity("success");
+          setRefresh((prev) => !prev)
+        }} // refresca los datos
+      />
 
       <Snackbar
         open={openSnackbar}

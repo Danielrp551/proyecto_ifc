@@ -35,6 +35,11 @@ export async function GET(request) {
           celular: true,
           tipo_control: true,
         },
+        orderBy: {
+        ultima_interaccion: orderBy === "por_vencer" ? "asc" : "desc",
+        },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
       })
 
       celularesFiltrados = clientes.map((c) => c.celular)
@@ -52,9 +57,21 @@ export async function GET(request) {
     }
 
     // Total real (para paginación)
-    const total = await db.collection("clientes").countDocuments(mongoFiltro)
+    let total = 0;
+    if (asesorId) {
+    total = await prisma.clientes.count({
+        where: {
+        asesor_control_id: parseInt(asesorId),
+        },
+    });
+    } else {
+    total = await db.collection("clientes").countDocuments({
+        conversaciones: { $exists: true, $ne: [] },
+    });
+    }
 
     // Consulta paginada
+    /*
     const clientesMongo = await db.collection("clientes").aggregate([
       { $match: mongoFiltro },
       {
@@ -80,6 +97,24 @@ export async function GET(request) {
         },
       },
     ]).toArray()
+    */
+    const clientesMongo = await db.collection("clientes").aggregate([
+    { $match: mongoFiltro },
+    {
+        $addFields: {
+        ultimaConversacion: { $arrayElemAt: ["$conversaciones", -1] },
+        },
+    },
+    {
+        $project: {
+        nombre: 1,
+        apellido: 1,
+        celular: 1,
+        estado: 1,
+        ultimaConversacion: 1,
+        },
+    },
+    ]).toArray();
 
     const conversacionesAdaptadas = clientesMongo.map((cliente) => {
       const { nombre, apellido = "", celular, ultimaConversacion } = cliente
