@@ -150,7 +150,7 @@ export default function ChatList({ chats, selectedChatId, onSelectChat, orderBy,
 
       {/* Lista de chats */}
       <List sx={{ flexGrow: 1, overflow: "auto", p: 0 }}>
-        {sortedChats.map((chat) => (
+        {chats.map((chat) => (
           <ChatItem
             key={chat.conversacion_id}
             chat={chat}

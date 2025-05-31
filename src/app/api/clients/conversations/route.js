@@ -23,7 +23,7 @@ export async function GET(request) {
 
     let celularesFiltrados = null;
     const tipoControlMap = new Map();
-    console.log("🔍 Parámetros de consulta:")
+    console.log("🔍 Parámetros de consulta:", orderBy)
 
     // Paso 1: Consultar clientes en Prisma
     if (asesorId) {
@@ -34,6 +34,7 @@ export async function GET(request) {
           select: {
             celular: true,
             tipo_control: true,
+            fecha_ultima_interaccion: true,
           },
           orderBy: {
             fecha_ultima_interaccion: orderBy === "por_vencer" ? "asc" : "desc",
@@ -160,8 +161,18 @@ export async function GET(request) {
       .filter((conv) => conv !== null)
       .map(({ fecha_obj, ...rest }) => rest);
 
+    const resultadoFinalOrdenado = resultadoFinal.sort((a, b) => {
+      if (orderBy === "por_vencer") {
+        return new Date(a.ultima_interaccion) - new Date(b.ultima_interaccion);
+      } else {
+        return new Date(b.ultima_interaccion) - new Date(a.ultima_interaccion);
+      }
+    });
+
+    //console.log("✅ Conversaciones adaptadas y ordenadas:", resultadoFinalOrdenado);
+
     return NextResponse.json({
-      conversaciones: resultadoFinal,
+      conversaciones: resultadoFinalOrdenado,
       total,
       page,
       pageSize,
