@@ -18,6 +18,7 @@ import Button from "@mui/material/Button"
 import Alert from "@mui/material/Alert"
 import Chip from "@mui/material/Chip"
 import MessageBubble from "./message-bubble"
+import { Snackbar } from "@mui/material"
 
 const formatDateTime = (dateString) => {
   const date = new Date(dateString)
@@ -28,19 +29,25 @@ const formatDateTime = (dateString) => {
   )
 }
 
-export default function ChatWindow({ chat, onSendMessage }) {
+export default function ChatWindow({ chat, onSendMessage,  asesorId, celularCliente }) {
   const [newMessage, setNewMessage] = useState("")
   const messagesEndRef = useRef(null)
   const [anchorEl, setAnchorEl] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const [leaving, setLeaving] = useState(false);
+  const [openSnackbar, setOpenSnackbar] = useState(false)
+  //const [hasLeft, setHasLeft] = useState(false)
   const open = Boolean(anchorEl)
 
+
+  const hasLeft = chat.tipo_control === "bot";
   // Verificar si el chat ha terminado
   const hasEndedControl =
     chat.estado_conversacion === "finalizada" ||
     chat.interacciones.some(
       (interaction) => interaction.tipo_mensaje === "sistema" && interaction.mensaje_chatbot === "FIN CONTROL ASESOR",
     )
+    
 
   const handleMenuClick = (event) => {
     setAnchorEl(event.currentTarget)
@@ -55,10 +62,29 @@ export default function ChatWindow({ chat, onSendMessage }) {
     setModalOpen(true)
   }
 
-  const handleConfirmLeave = () => {
-    setModalOpen(false)
-    // Aquí iría la lógica para dejar la conversación
+const handleConfirmLeave = async () => {
+  setLeaving(true);
+  try {
+    const response = await fetch("/api/clients/control/leave", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        asesorId,      // id del asesor que deja el control
+        celular: celularCliente, // puedes ajustar el campo según tu modelo
+      }),
+    });
+    if (!response.ok) throw new Error("Error al dejar conversación");
+    // Opcional: Puedes mostrar feedback, refrescar, o cambiar el estado global
+    // Por ejemplo, podrías emitir un evento, refrescar la lista, etc.
+    setModalOpen(false);
+    chat.tipo_control = "bot"; // Actualiza el tipo de control localmente
+    //setHasLeft(true);
+  } catch (err) {
+    console.error("Error al dejar la conversación:", err);
+  } finally {
+    setLeaving(false);
   }
+};
 
     useEffect(() => {
     if (chat?.interacciones?.length) {
@@ -66,11 +92,37 @@ export default function ChatWindow({ chat, onSendMessage }) {
     }
     }, [chat.interacciones])
 
-  const handleSubmit = (e) => {
+  const sendMessageToServer = async (celular, mensaje) => {
+    const response = await fetch("https://pdcgrsx8x0.execute-api.us-east-2.amazonaws.com/enviarMensaje", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        celular,
+        mensaje,
+        asesorId,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Error al enviar el mensaje");
+    }
+    return response.json();
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (newMessage.trim()) {
-      onSendMessage(newMessage)
-      setNewMessage("")
+    if (!newMessage.trim()) return;
+    try {
+      // Llama a la ruta que envía el mensaje al backend
+      await sendMessageToServer(celularCliente, newMessage.trim());
+
+      // Si quieres actualizar el chat localmente:
+      onSendMessage && onSendMessage(newMessage); // solo si lo usas
+      setNewMessage("");
+      setOpenSnackbar(true)
+
+    } catch (error) {
+      console.error("Error al enviar el mensaje:", error);
     }
   }
 
@@ -196,15 +248,15 @@ export default function ChatWindow({ chat, onSendMessage }) {
             <Button onClick={() => setModalOpen(false)} variant="outlined">
               Cancelar
             </Button>
-            <Button onClick={handleConfirmLeave} variant="contained" color="primary">
-              Confirmar
+            <Button onClick={handleConfirmLeave} variant="contained" color="primary" disabled={leaving}>
+              {leaving ? "Procesando..." : "Confirmar"}
             </Button>
           </Box>
         </Box>
       </Modal>
 
       {/* Input - Solo se muestra si el chat no ha terminado */}
-      {!hasEndedControl && (
+      {!hasEndedControl && !hasLeft && (
         <Paper
           component="form"
           onSubmit={handleSubmit}
@@ -254,6 +306,21 @@ export default function ChatWindow({ chat, onSendMessage }) {
           </IconButton>
         </Paper>
       )}
+      {hasLeft && (
+        <Alert severity="info" sx={{ m: 2, mb: 2 }}>
+          Has abandonado esta conversación. Ya no puedes enviar mensajes.
+        </Alert>
+      )}
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={2500}
+        onClose={() => setOpenSnackbar(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert onClose={() => setOpenSnackbar(false)} severity="success" sx={{ width: '100%' }}>
+          ¡Mensaje enviado exitosamente!
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }

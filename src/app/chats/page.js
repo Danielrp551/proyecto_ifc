@@ -256,6 +256,9 @@ export default function MisChats() {
     })
   }
 
+  const asesorId = session?.user?.asesor?.asesor_id
+  const celularCliente = selectedChat?.cliente?.celular 
+
   if (loading) {
     return (
       <ThemeProvider theme={theme}>
@@ -289,7 +292,7 @@ export default function MisChats() {
           </Box>
           <Box sx={{ width: "67%", bgcolor: "#e5ddd5" }}>
             {selectedChat ? (
-              <ChatWindow chat={selectedChat} onSendMessage={handleSendMessage} />
+              <ChatWindow chat={selectedChat} onSendMessage={handleSendMessage} asesorId={asesorId} celularCliente={celularCliente}/>
             ) : (
               <Box
                 sx={{
