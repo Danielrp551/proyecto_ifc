@@ -73,7 +73,17 @@ export async function GET(request) {
     const mongoFiltro = {
       conversaciones: { $exists: true, $ne: [] },
     };
-    if (celularesFiltrados?.length > 0) {
+    if (asesorId) {
+      if (!celularesFiltrados || celularesFiltrados.length === 0) {
+        // El asesor no tiene clientes, devuelve vacío
+        return NextResponse.json({
+          conversaciones: [],
+          total: 0,
+          page,
+          pageSize,
+        });
+      }
+      // Si sí tiene clientes, filtra por celulares
       mongoFiltro.celular = { $in: celularesFiltrados };
     }
 

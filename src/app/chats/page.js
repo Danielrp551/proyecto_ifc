@@ -9,6 +9,7 @@ import Container from "@mui/material/Container"
 import ChatList from "@/components/chat-list"
 import ChatWindow from "@/components/chat-window"
 import { useSession } from "next-auth/react"
+import { FormControl, InputLabel, MenuItem, Select } from "@mui/material"
 
 // Create a theme
 const theme = createTheme({
@@ -27,16 +28,36 @@ export default function MisChats() {
   const [selectedChat, setSelectedChat] = useState(null)
   const [loading, setLoading] = useState(true)
   const [orderBy, setOrderBy] = useState("mas_reciente")
-
+  const [asesores, setAsesores] = useState([])
+  const [asesorFiltro, setAsesorFiltro] = useState("")
   const { data: session, status } = useSession();
   // Asesor ID : session.user.asesor
 
+  const isAdmin = session?.user?.rol === "admin" || session?.user?.rol === "admin_general"
+
+  useEffect(() => {
+    if (isAdmin) {
+      fetch("/api/gestores")
+        .then(res => res.json())
+        .then(data => {
+          setAsesores(data.asesores)
+          // Si aún no hay asesorFiltro, selecciona el primero
+          if (data.asesores.length > 0 && !asesorFiltro) {
+            setAsesorFiltro(data.asesores[0].asesor_id);
+          }
+        })
+        .catch(() => setAsesores([]))
+    }
+  }, [isAdmin])
+
   useEffect(() => {
     if (status !== "authenticated") return;
+
+    if (isAdmin && !asesorFiltro) return;
     
     const fetchChats = async () => {
       try {
-        const asesorId = session?.user?.asesor.asesor_id
+        const asesorId = isAdmin ? asesorFiltro : session?.user?.asesor?.asesor_id
         const queryParams = new URLSearchParams({ orderBy })
         setLoading(true)
 
@@ -63,7 +84,7 @@ export default function MisChats() {
     }
 
     fetchChats()
-  }, [orderBy,status])
+  }, [orderBy,status,asesorFiltro])
 
   const handleSelectChat = (chat) => {
     setSelectedChat(chat)
@@ -120,8 +141,28 @@ export default function MisChats() {
             Mis Chats
           </Typography>
         </Box>
-        <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
-          <Box sx={{ width: "33%", borderRight: 1, borderColor: "divider", bgcolor: "background.paper" }}>
+        <Box sx={{ display: "flex", flex: 1, overflow: "hidden",height: "100%" }}>
+          <Box sx={{ width: "33%",overflow: "hidden", borderRight: 1, borderColor: "divider", bgcolor: "background.paper",height: "100%",  minHeight: 0, }}>
+                                    {isAdmin && (
+              <Box sx={{ px: 2, pt: 2, pb: 1 }}>
+                <FormControl size="small" fullWidth>
+                  <InputLabel id="asesor-select-label">Asesor</InputLabel>
+                  <Select
+                    labelId="asesor-select-label"
+                    value={asesorFiltro} 
+                    label="Asesor"
+                    onChange={(e) => setAsesorFiltro(e.target.value)}
+                    sx={{ minWidth: 160, background: "#f0f2f5" }}
+                  >
+                    {asesores.map(a => (
+                      <MenuItem key={a.asesor_id} value={a.asesor_id}>
+                        {a.nombre + " " + a.primer_apellido + " " + a.segundo_apellido}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
+            )}
             <ChatList 
                 chats={chats} 
                 selectedChatId={selectedChat?.conversacion_id} 
@@ -131,7 +172,7 @@ export default function MisChats() {
                 loading={loading}
             />
           </Box>
-          <Box sx={{ width: "67%", bgcolor: "#e5ddd5" }}>
+          <Box sx={{ width: "67%", bgcolor: "#e5ddd5", height: "100%", minHeight: 0, display: "flex", flexDirection: "column" }}>
             {selectedChat ? (
               <ChatWindow chat={selectedChat} onSendMessage={handleSendMessage} asesorId={asesorId} celularCliente={celularCliente}/>
             ) : (
