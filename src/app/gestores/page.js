@@ -103,6 +103,8 @@ const [clienteParaControl, setClienteParaControl] = useState(null);
     console.log("Asesor: ", asesor);
   }
 
+  const isHabilitado = session.user?.asesor.asesor_id === "8" || session.user?.asesor.asesor_id === "13" || session?.user?.rol === "admin" || session?.user?.rol === "admin_general";
+
   useEffect(() => {
     const fetchGestores = async () => {
       setLoading(true);
@@ -665,7 +667,8 @@ const [clienteParaControl, setClienteParaControl] = useState(null);
             <MenuItem onClick={() => handleAction("conversacion")}>
               Ver Conversación
             </MenuItem>
-            <MenuItem
+            { isHabilitado && (
+              <MenuItem
               onClick={() => {
                 handleMenuClose();
                 handleTomarControl(selectedClient);
@@ -673,6 +676,8 @@ const [clienteParaControl, setClienteParaControl] = useState(null);
             >
               Tomar Control
             </MenuItem>
+            )}
+            
           </Menu>
         </>
       )}

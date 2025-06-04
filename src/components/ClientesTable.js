@@ -72,6 +72,9 @@ export default function ClientesTable({
 const [selectedTime, setSelectedTime] = useState(null);
 
   const router = useRouter();
+  
+  const isHabilitado = asesor.asesor_id === "8" || asesor.asesor_id === "13";
+
 
   const handleMenuOpen = (params, event) => {
     setSelectedRow(params.row);
@@ -363,9 +366,12 @@ const [selectedTime, setSelectedTime] = useState(null);
         <MenuItem onClick={() => handleAction("conversacion")}>
           Ver Conversación
         </MenuItem>
-        <MenuItem onClick={() => handleAction("tomar_control")}>
+        {isHabilitado && (
+          <MenuItem onClick={() => handleAction("tomar_control")}>
           Tomar control del cliente
-        </MenuItem>
+          </MenuItem>
+        )}
+        
         {/*<MenuItem onClick={() => handleAction('detalles')}>Ver Detalles</MenuItem>*/}
       </Menu>
 

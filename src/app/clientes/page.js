@@ -101,6 +101,8 @@ const [selectedClienteId, setSelectedClienteId] = useState(null);
     console.log("Asesor: ", asesor);
   }
 
+    const isHabilitado = session.user?.asesor.asesor_id === "8" || session.user?.asesor.asesor_id === "13" || session?.user?.rol === "admin" || session?.user?.rol === "admin_general";
+
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -638,7 +640,8 @@ const [selectedClienteId, setSelectedClienteId] = useState(null);
             <MenuItem onClick={() => handleAction("conversacion")}>
               Ver Conversación
             </MenuItem>
-            <MenuItem
+            {isHabilitado && (
+              <MenuItem
               onClick={() => {
                 setSelectedClienteId(selectedClient.cliente_id);
                 setOpenModalTomarControl(true);
@@ -647,6 +650,8 @@ const [selectedClienteId, setSelectedClienteId] = useState(null);
             >
               Tomar Control del Cliente
             </MenuItem>
+            )}
+            
           </Menu>
         </>
       )}
