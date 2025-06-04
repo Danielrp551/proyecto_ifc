@@ -73,7 +73,7 @@ export default function Layout({ children }) {
       </Toolbar>
       <Divider sx={{ bgcolor: "#2D3748" }} />
       <List>
-        {isAdmin && isAsesorPermited && (
+        {(isAdmin || isAsesorPermited) && (
           <>
           <ListItem
             button="true"
