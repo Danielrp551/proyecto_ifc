@@ -50,7 +50,7 @@ export default function Layout({ children }) {
   };
 
   const isAdmin = session?.user?.rol === "admin" || session?.user?.rol === "admin_general";
-  const isAsesorPermited = session.user?.asesor.asesor_id === "8" || session.user?.asesor.asesor_id === "13";
+  const isAsesorPermited = session?.user?.asesor.asesor_id === "8" || session?.user?.asesor.asesor_id === "13";
   console.log("Rol", session?.user?.rol)
   console.log("Asesor ID", session?.user?.asesor.asesor_id);
 
