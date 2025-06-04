@@ -73,7 +73,7 @@ const [selectedTime, setSelectedTime] = useState(null);
 
   const router = useRouter();
   
-  const isHabilitado = asesor.asesor_id === "8" || asesor.asesor_id === "13";
+  const isHabilitado = asesor.asesor_id === 8 || asesor.asesor_id === 13;
 
 
   const handleMenuOpen = (params, event) => {

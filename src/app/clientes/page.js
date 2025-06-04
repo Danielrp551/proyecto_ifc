@@ -101,7 +101,7 @@ const [selectedClienteId, setSelectedClienteId] = useState(null);
     console.log("Asesor: ", asesor);
   }
 
-  const isHabilitado = session?.user?.asesor.asesor_id === "8" || session?.user?.asesor.asesor_id === "13" || session?.user?.rol === "admin" || session?.user?.rol === "admin_general";
+  const isHabilitado = session?.user?.asesor.asesor_id === 8 || session?.user?.asesor.asesor_id === 13 || session?.user?.rol === "admin" || session?.user?.rol === "admin_general";
 
 
   useEffect(() => {
