@@ -227,3 +227,14 @@ model historico_score {
 
   @@index([cliente_id], map: "cliente_id")
 }
+
+model horarios {
+  id             Int     @id @default(autoincrement())
+  tipo_servicio  String? @db.VarChar(100)
+  tipo_horario   String? @db.VarChar(100)
+  dia_recurrente String? @db.VarChar(50)
+  fecha_fijo     String? @db.VarChar(50)
+  inicio         String? @db.VarChar(50)
+  fin            String? @db.VarChar(50)
+  mes_horario    String? @db.VarChar(50)
+}
