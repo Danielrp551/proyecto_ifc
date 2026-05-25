@@ -21,7 +21,10 @@ function buildFirestore() {
   const opts = { databaseId };
 
   if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
-    const creds = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+    // Strip BOM (U+FEFF — PowerShell "| clip" en Windows lo agrega) y trim espacios.
+    let raw = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON.trim();
+    if (raw.charCodeAt(0) === 0xFEFF) raw = raw.slice(1);
+    const creds = JSON.parse(raw);
     opts.projectId = creds.project_id;
     opts.credentials = {
       client_email: creds.client_email,
