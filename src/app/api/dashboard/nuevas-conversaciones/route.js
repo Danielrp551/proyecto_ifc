@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import { MongoClient } from "mongodb";
-
-const uri = process.env.MONGODB_URI;
-const clientPromise = new MongoClient(uri).connect();
+import { countInteraccionesEnRangoParaCelulares } from "@/lib/firestore";
 
 export async function GET(request) {
   try {
@@ -97,40 +94,11 @@ export async function GET(request) {
 
     const celulares = clientes.map((cliente) => cliente.celular);
 
-    // Conectar a MongoDB
-    const mongoClient = await clientPromise;
-    const db = mongoClient.db(process.env.MONGODB_DB);
-
-    // Consultar interacciones desde la colección "clientes"
-    const interacciones = await db.collection("clientes").aggregate([
-      {
-        $match: {
-          "celular": { $in: celulares },
-        },
-      },
-      {
-        $unwind: "$conversaciones",
-      },
-      {
-        $unwind: "$conversaciones.interacciones",
-      },
-      {
-        $match: {
-          "conversaciones.interacciones.fecha": {
-            $gte: fechaInicioObj,
-            $lte: fechaFinObj,
-          },
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          totalInteracciones: { $sum: 1 },
-        },
-      },
-    ]).toArray();
-
-    const totalInteracciones = interacciones.length > 0 ? interacciones[0].totalInteracciones : 0;
+    const totalInteracciones = await countInteraccionesEnRangoParaCelulares(
+      fechaInicioObj,
+      fechaFinObj,
+      celulares
+    );
 
     // 1. Arreglo de objetos con fecha y número de conversaciones (clientes) por fecha
     const clientesPorFecha = clientes.reduce((acc, cliente) => {

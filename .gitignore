@@ -32,6 +32,11 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# Service Account JSON keys (NEVER commit)
+.vercel-sa-key.json
+*-sa-key.json
+service_account*.json
+
 # vercel
 .vercel
 

@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import { MongoClient } from 'mongodb';
+import getFirestore from '@/lib/firestore';
 import { google } from 'googleapis';
-
-const uri = process.env.MONGODB_URI;
-const clientPromise = new MongoClient(uri).connect();
 
 const SCOPES = ["https://www.googleapis.com/auth/calendar"];
 const CALENDAR_ID = "ifc.citas@gmail.com";
@@ -189,46 +186,28 @@ export async function POST(request) {
 
     await createEvent(calendarService, motivo, cita.fecha, cita.hora,20);
 
-    const client = await clientPromise;
-    const db = client.db("your_database_name");
+    // Crear cliente + conversación activa en Firestore
+    const fs = getFirestore();
+    const clienteId = `cli_${Date.now()}`;
+    const conversacionId = `conv_${Date.now()}`;
+    const clienteRef = fs.collection('clientes').doc(clienteId);
+    const ahora = new Date();
 
-    const cliente = {
-      cliente_id: `cli_${Date.now()}`,
+    await clienteRef.set({
+      cliente_id: clienteId,
       nombre,
-      celular : celular_editado,
+      celular: celular_editado,
       estado,
-      email: "",
-      conversaciones: [],
-    };
+      email: '',
+      fecha_creacion: ahora,
+    });
 
-    await db.collection("clientes").insertOne(cliente);
-
-    const nuevaConversacion = {
-      conversacion_id: `conv_${Date.now()}`,
-      estado: "activa",
-      ultima_interaccion: new Date(),
-      interacciones: [],
-    };
-
-    await db.collection("clientes").updateOne(
-      { celular: celular_editado },
-      { $push: { conversaciones: nuevaConversacion } }
-    );
-
-    /*
-    const nuevaInteraccion = {
-      fecha: new Date(),
-      mensaje_cliente: "Nueva cita creada",
-      mensaje_chatbot: "Confirmación pendiente",
-    };
-
-    await db.collection("clientes").updateOne(
-      { celular, "conversaciones.estado": "activa" },
-      {
-        $push: { "conversaciones.$.interacciones": nuevaInteraccion },
-        $set: { "conversaciones.$.ultima_interaccion": new Date() },
-      }
-    );*/
+    await clienteRef.collection('conversaciones').doc(conversacionId).set({
+      conversacion_id: conversacionId,
+      estado: 'activa',
+      fecha_inicio: ahora,
+      ultima_interaccion: ahora,
+    });
 
     return NextResponse.json(newClient, { status: 201 });
   } catch (error) {

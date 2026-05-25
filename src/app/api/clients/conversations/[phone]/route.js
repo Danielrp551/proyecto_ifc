@@ -1,25 +1,17 @@
 import { NextResponse } from 'next/server';
-import clientPromise from '@/lib/mongodb';
+import { findClienteDocByCelular, listConversacionesConInteracciones } from '@/lib/firestore';
 
-export async function GET(request, { params }) {
+export async function GET(_request, { params }) {
   try {
-    const { phone } = params;
-    const mongoClient = await clientPromise;
-    const db = mongoClient.db(process.env.MONGODB_DB);
-
-    const conversations = await db.collection('clientes').findOne(
-      { celular: phone },
-      { projection: { conversaciones: 1 } }
-    );
-
-    if (!conversations) {
-      return NextResponse.json({ conversations: [] });
+    const { phone } = await params;
+    const clienteDoc = await findClienteDocByCelular(phone);
+    if (!clienteDoc) {
+      return NextResponse.json({ conversaciones: [] });
     }
-
-    return NextResponse.json(conversations);
+    const conversaciones = await listConversacionesConInteracciones(clienteDoc);
+    return NextResponse.json({ conversaciones });
   } catch (error) {
     console.error('Error fetching conversations:', error);
     return NextResponse.json({ error: 'Error fetching conversations' }, { status: 500 });
   }
 }
-

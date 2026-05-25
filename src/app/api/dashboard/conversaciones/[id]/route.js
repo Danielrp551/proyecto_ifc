@@ -1,49 +1,36 @@
-import prisma from "@/lib/db";
-import { NextResponse } from "next/server";
-import { MongoClient } from "mongodb";
+import prisma from '@/lib/db';
+import { NextResponse } from 'next/server';
+import { findClienteDocByCelular, listConversacionesConInteracciones } from '@/lib/firestore';
 
-const uri = process.env.MONGODB_URI;
-const clientPromise = new MongoClient(uri).connect();
-
-export async function GET(request, { params }) {
+export async function GET(_request, { params }) {
   try {
-    const { id } = params; // Obtener el ID del cliente desde la URL
+    const { id } = await params;
 
-    // Verificar si el cliente existe en la base de datos
     const cliente = await prisma.clientes.findUnique({
-      where: { cliente_id: parseInt(id) },
-      select: {
-        cliente_id: true,
-        nombre: true,
-        apellido: true,
-        celular: true,
-      },
+      where: { cliente_id: parseInt(id, 10) },
+      select: { cliente_id: true, nombre: true, apellido: true, celular: true },
     });
 
     if (!cliente) {
-      return NextResponse.json({ message: "Cliente no encontrado" }, { status: 404 });
+      return NextResponse.json({ message: 'Cliente no encontrado' }, { status: 404 });
     }
 
-    // Conectar a MongoDB y obtener las conversaciones del cliente
-    const mongoClient = await clientPromise;
-    const db = mongoClient.db(process.env.MONGODB_DB);
-    const conversaciones = await db.collection("clientes").findOne(
-      { celular: cliente.celular },
-      { projection: { conversaciones: 1 } }
-    );
-
+    const clienteDoc = await findClienteDocByCelular(cliente.celular);
+    const conversaciones = clienteDoc
+      ? await listConversacionesConInteracciones(clienteDoc)
+      : [];
 
     return NextResponse.json({
       cliente: {
-        nombreCompleto: `${cliente.nombre} ${cliente.apellido}`,
+        nombreCompleto: `${cliente.nombre} ${cliente.apellido || ''}`.trim(),
         celular: cliente.celular,
       },
-      conversaciones: conversaciones?.conversaciones || [],
+      conversaciones,
     });
   } catch (error) {
-    console.error("Error al obtener conversaciones del cliente:", error);
+    console.error('Error al obtener conversaciones del cliente:', error);
     return NextResponse.json(
-      { message: "Error interno del servidor al obtener las conversaciones" },
+      { message: 'Error interno del servidor al obtener las conversaciones' },
       { status: 500 }
     );
   }

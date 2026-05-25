@@ -1,10 +1,7 @@
 import prisma from "@/lib/db";
 import { NextResponse } from "next/server";
-import { MongoClient } from 'mongodb';
+import { findClienteDocByCelular, listConversacionesConInteracciones } from '@/lib/firestore';
 import { google } from 'googleapis';
-
-const uri = process.env.MONGODB_URI;
-const clientPromise = new MongoClient(uri).connect();
 
 const SCOPES = ["https://www.googleapis.com/auth/calendar"];
 const CALENDAR_ID = "ifc.citas@gmail.com";
@@ -241,13 +238,11 @@ export async function GET(request, { params }) {
       return NextResponse.json({ message: "Cliente no encontrado" }, { status: 404 });
     }
 
-    // Fetch conversations from MongoDB
-    const mongoClient = await clientPromise;
-    const db = mongoClient.db(process.env.MONGODB_DB);
-    const mongoConversations = await db.collection('clientes').findOne(
-      { celular: cliente.celular },
-      { projection: { conversaciones: 1 } }
-    );
+    // Fetch conversations from Firestore
+    const clienteDoc = await findClienteDocByCelular(cliente.celular);
+    const conversaciones = clienteDoc
+      ? await listConversacionesConInteracciones(clienteDoc)
+      : [];
 
     // Format dates to ISO string for easier handling in the frontend
     const formattedCliente = {
@@ -272,7 +267,7 @@ export async function GET(request, { params }) {
         ...lead,
         fecha_contacto: lead.fecha_contacto.toISOString()
       })),
-      conversaciones: mongoConversations?.conversaciones || []
+      conversaciones,
     };
 
     return NextResponse.json(formattedCliente);
