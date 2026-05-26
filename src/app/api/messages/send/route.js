@@ -3,8 +3,16 @@
 
 import { NextResponse } from 'next/server';
 
-const CHATBOT_API_URL = process.env.CHATBOT_API_URL;
-const CHATBOT_API_KEY = process.env.CHATBOT_API_KEY;
+// Strip whitespace, CR, LF y BOM (U+FEFF) que PowerShell "| clip" agrega al pegar en Vercel.
+function cleanEnv(value) {
+  if (!value) return value;
+  let v = value;
+  if (v.charCodeAt(0) === 0xFEFF) v = v.slice(1);
+  return v.replace(/[\r\n\t]/g, '').trim();
+}
+
+const CHATBOT_API_URL = cleanEnv(process.env.CHATBOT_API_URL);
+const CHATBOT_API_KEY = cleanEnv(process.env.CHATBOT_API_KEY);
 
 export async function POST(request) {
   if (!CHATBOT_API_URL || !CHATBOT_API_KEY) {
