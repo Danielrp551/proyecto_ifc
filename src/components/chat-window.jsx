@@ -93,7 +93,7 @@ const handleConfirmLeave = async () => {
     }, [chat.interacciones])
 
   const sendMessageToServer = async (celular, mensaje) => {
-    const response = await fetch("https://pdcgrsx8x0.execute-api.us-east-2.amazonaws.com/enviarMensaje", {
+    const response = await fetch("/api/messages/send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

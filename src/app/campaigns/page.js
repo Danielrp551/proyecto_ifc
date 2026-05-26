@@ -352,7 +352,7 @@ export default function CampaignManagement() {
       };
 
       const response = await fetch(
-        "https://pdcgrsx8x0.execute-api.us-east-2.amazonaws.com/lambdaA",
+        "/api/campaigns/run",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
